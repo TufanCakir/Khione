@@ -5,7 +5,7 @@
 
 import Foundation
 import StoreKit
-import Combine
+internal import Combine
 import SwiftUI
 
 @MainActor
@@ -34,6 +34,13 @@ final class SubscriptionManager: ObservableObject {
         }
     }
 
+    private let initializedKey = "freeTierInitialized"
+
+    private var isInitialized: Bool {
+        get { UserDefaults.standard.bool(forKey: initializedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: initializedKey) }
+    }
+
     // MARK: - Plan Loading
     func loadPlans() {
         plans = Bundle.main.loadPlans(language: language)
@@ -43,20 +50,24 @@ final class SubscriptionManager: ObservableObject {
     // MARK: - Persistence
     private var lastConsumeDate: Date {
         get {
-            UserDefaults.standard.object(forKey: lastConsumeKey) as? Date ?? Date()
+            UserDefaults.standard.object(forKey: lastConsumeKey) as? Date
+            ?? .distantPast
         }
         set {
             UserDefaults.standard.set(newValue, forKey: lastConsumeKey)
         }
     }
 
+
     // MARK: - StoreKit Sync
     func syncWithStoreKit() async {
         tier = storeKit.activeTier
 
         if tier == .free {
-            if remainingMessagesToday == 0 {
+            if !isInitialized {
                 remainingMessagesToday = dailyMessageLimit
+                lastConsumeDate = Date()
+                isInitialized = true
             }
             refillMessagesIfNeeded()
         }
@@ -94,8 +105,13 @@ final class SubscriptionManager: ObservableObject {
 
     // MARK: - Limits
     var dailyMessageLimit: Int {
-        plans.first { $0.id == tier }?.dailyMessageLimit ?? 0
+        plans.first { $0.id == tier.rawValue }?.dailyMessageLimit ?? 0
     }
+
+    var nextRefillDate: Date {
+        lastConsumeDate.addingTimeInterval(refillInterval)
+    }
+
 
     // MARK: - Feature Flags
     var canUseProgrammingMode: Bool { tier != .free }
@@ -108,8 +124,10 @@ final class SubscriptionManager: ObservableObject {
 
     // MARK: - Pricing
     func price(for tier: SubscriptionTier) -> String {
-        storeKit.product(for: tier)?.displayPrice ?? "—"
+        guard let productID = tier.productID else { return "—" }
+        return storeKit.product(for: productID)?.displayPrice ?? "—"
     }
+
 
     // MARK: - UX Helper (optional, sehr empfohlen)
     var nextRefillIn: TimeInterval {

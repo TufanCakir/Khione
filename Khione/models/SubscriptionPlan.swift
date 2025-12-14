@@ -8,7 +8,7 @@
 import Foundation
 
 struct SubscriptionPlan: Identifiable, Decodable {
-    let id: SubscriptionTier
+    let id: String        // ✅ RICHTIG
     let name: String
     let dailyMessageLimit: Int
     let features: [String]

@@ -1,6 +1,6 @@
 import Foundation
 import FoundationModels
-import Combine
+internal import Combine
 import UIKit
 
 @MainActor

@@ -50,8 +50,13 @@ struct SubscriptionView: View {
             Text(plan.name)
                 .font(.title2.bold())
 
-            Text(subscription.price(for: plan.id))
-                .foregroundColor(.secondary)
+            if let tier = SubscriptionTier(rawValue: plan.id) {
+                Text(subscription.price(for: tier))
+                    .foregroundColor(.secondary)
+            } else {
+                Text("—")
+                    .foregroundColor(.secondary)
+            }
 
             ForEach(plan.features, id: \.self) {
                 Text("• \($0)")
@@ -60,9 +65,10 @@ struct SubscriptionView: View {
 
             Button(text.subscribe) {
                 Task {
-                    if let product = storeKit.products.first(where: {
-                        $0.id == plan.id.productID
-                    }) {
+                    if let tier = SubscriptionTier(rawValue: plan.id),
+                       let productID = tier.productID,
+                       let product = storeKit.products.first(where: { $0.id == productID }) {
+
                         try? await storeKit.purchase(product)
                         await subscription.syncWithStoreKit()
                         dismiss()
@@ -75,4 +81,5 @@ struct SubscriptionView: View {
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
+
 }

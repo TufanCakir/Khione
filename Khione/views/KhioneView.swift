@@ -10,33 +10,55 @@ import StoreKit
 
 struct KhioneView: View {
 
+    // MARK: - State & Environment
     @StateObject private var viewModel = ViewModel()
-    @EnvironmentObject private var subscription: SubscriptionManager   // ✅
+    @EnvironmentObject private var subscription: SubscriptionManager
     @EnvironmentObject private var themeManager: ThemeManager
 
-    @State private var showUpgradeSheet = false                        // ✅
+    @State private var showUpgradeSheet = false
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
-    @State private var inputText: String = ""
+    @State private var inputText = ""
 
     @FocusState private var isInputFocused: Bool
 
+    // MARK: - Body
     var body: some View {
         NavigationStack {
             ZStack {
                 themeBackground
-                
+
+                // Main content
                 VStack(spacing: 0) {
-                    modeSelector
-                        .padding(.horizontal)
-                        .padding(.top)
-                    
+                    // Place your chat view content here
                     chatView
                 }
             }
-            .navigationTitle("Khione")
-          
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Menu {
+                        ForEach(viewModel.modes.filter { $0.id != "programming" || subscription.canUseProgrammingMode }) { mode in
+                            Button {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                viewModel.setMode(mode)
+                            } label: {
+                                Label(mode.name, systemImage: mode.icon)
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(viewModel.selectedMode?.name ?? "Khione")
+                                .font(.headline)
+                                .accessibilityLabel("Modus auswählen")
+                                .accessibilityHint("Tippe, um den Chat-Modus zu wechseln")
+                            if viewModel.modes.count > 1 {
+                                Image(systemName: "chevron.down")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         AccountView()
@@ -47,67 +69,99 @@ struct KhioneView: View {
             }
         }
         .sheet(isPresented: $showImagePicker) {
-            ImagePicker(image: $selectedImage)
+            if subscription.canUseVision {
+                ImagePicker(image: $selectedImage)
+            }
         }
     }
-    
 
-    
+    // MARK: - Background
     private var themeBackground: some View {
-        themeManager.backgroundColor
-            .ignoresSafeArea()
+        themeManager.backgroundColor.ignoresSafeArea()
     }
-    
-    // MARK: - Mode Selector
-    private var modeSelector: some View {
-        Menu {
-            ForEach(viewModel.modes.filter { mode in
-                // Programming nur anzeigen, wenn nicht Free
-                mode.id != "programming" || subscription.canUseProgrammingMode
-            }) { mode in
-                Button {
-                    viewModel.setMode(mode)
-                } label: {
-                    Label(mode.name, systemImage: mode.icon)
-                }
-            }
-        } label: {
-            HStack {
-                Label(
-                    viewModel.selectedMode?.name ?? "Select Mode",
-                    systemImage: viewModel.selectedMode?.icon ?? "slider.horizontal.3"
-                )
-                Spacer()
-                Image(systemName: "chevron.down")
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+    // MARK: - Chat View
+    private var chatView: some View {
+        VStack(spacing: 0) {
+
+            messagesList
+
+            attachmentPreview
+            statusHintBar
+            footerBar
         }
     }
-    
-    // MARK: - Input Bar
-    private var inputBar: some View {
-        HStack(spacing: 12) {
-            TextField("Message Khione…", text: $inputText)
-                .autocorrectionDisabled(false)
-                .textInputAutocapitalization(.sentences)
 
+    // MARK: - Messages
+    private var messagesList: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(viewModel.messages) { message in
+                        ChatBubbleView(message: message)
+                            .id(message.id)
+                    }
+
+                    if viewModel.isProcessing {
+                        ProgressView("Khione is thinking…")
+                            .padding(.top)
+                            .id("typing")
+                    }
+                }
+                .padding(.vertical)
+            }
+            .onChange(of: viewModel.messages.count) { _, _ in
+                scrollToBottom(proxy)
+            }
+            .onChange(of: viewModel.isProcessing) { _, _ in
+                scrollToBottom(proxy)
+            }
+        }
+    }
+
+    // MARK: - Footer
+    private var footerBar: some View {
+        HStack(spacing: 10) {
+
+            attachmentButton
+
+            TextField(
+                "Message Khione…",
+                text: $inputText,
+                axis: .vertical
+            )
             .focused($isInputFocused)
             .lineLimit(1...4)
             .padding(10)
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 14))
-            
+            .animation(.easeOut(duration: 0.2), value: isInputFocused)
+
             if viewModel.isProcessing {
                 stopButton
             } else {
                 sendButton
             }
         }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
     }
-    
+
+    private var attachmentButton: some View {
+        Button {
+            subscription.canUseVision
+                ? (showImagePicker = true)
+                : (showUpgradeSheet = true)
+        } label: {
+            Image(systemName: "plus")
+                .font(.title3)
+        }
+        .disabled(!subscription.canUseVision)
+        .opacity(subscription.canUseVision ? 1 : 0.35)
+    }
+
+    // MARK: - Buttons
     private var sendButton: some View {
         Button(action: handleSend) {
             if subscription.canSendMessage {
@@ -124,44 +178,6 @@ struct KhioneView: View {
         .disabled(!canSend)
     }
 
-
-    private func handleSend() {
-        guard canSend else { return }
-
-        // 🚫 Limit erreicht → Upgrade
-        guard subscription.canSendMessage else {
-            DispatchQueue.main.async {
-                showUpgradeSheet = true
-            }
-            return
-        }
-
-        // 🚫 Vision benötigt
-        if selectedImage != nil && !subscription.canUseVision {
-            DispatchQueue.main.async {
-                showUpgradeSheet = true
-            }
-            return
-        }
-
-        isInputFocused = false
-
-        viewModel.send(
-            text: inputText,
-            image: selectedImage
-        )
-
-        // ⚠️ Auch @Published → async!
-        DispatchQueue.main.async {
-            subscription.consumeMessageIfNeeded()
-        }
-
-        inputText = ""
-        selectedImage = nil
-    }
-
-
-    
     private var stopButton: some View {
         Button {
             viewModel.cancel()
@@ -173,100 +189,49 @@ struct KhioneView: View {
         .buttonStyle(.bordered)
         .tint(.red)
     }
-    
-    
-    
-    
-    private var footerBar: some View {
-        HStack(spacing: 10) {
-            
-            // ➕ Attachment Button
-            Button {
-                showImagePicker = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.title3)
-            }
-            
-            // Text Input
-            TextField(
-                "Message Khione…",
-                text: $inputText,
-                axis: .vertical
-            )
-            .focused($isInputFocused)
-            .lineLimit(1...4)
-            .padding(10)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
 
-            if subscription.tier == .free {
-                if subscription.remainingMessagesToday > 0 {
-                    Text("\(subscription.remainingMessagesToday) Nachrichten verfügbar")
+    // MARK: - Status Hint
+    private var statusHintBar: some View {
+        Group {
+            if subscription.tier == .free &&
+                (isInputFocused || subscription.remainingMessagesToday == 0) {
+
+                HStack(spacing: 6) {
+
+                    if subscription.remainingMessagesToday > 0 {
+                        Text("\(subscription.remainingMessagesToday)")
+                            .font(.caption.bold())
+                        Text("Nachrichten verfügbar")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Image(systemName: "clock")
+                            .font(.caption2)
+                        RefillCountdownView(
+                            nextRefillDate: subscription.nextRefillDate
+                        )
+                    }
+
+                    Spacer()
+
+                    Label("Vision", systemImage: "lock.fill")
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                        .padding(.bottom, 4)
-                } else {
-                    Text("Nächste Nachricht in \(formatTime(subscription.nextRefillIn))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.bottom, 4)
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2),
+                           value: subscription.remainingMessagesToday)
             }
-
-
-
-            // Send / Stop
-            if viewModel.isProcessing {
-                stopButton
-            } else {
-                sendButton
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
-    }
-    
-    
-    // MARK: - chatView
-    private var chatView: some View {
-        VStack(spacing: 0) {
-
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(viewModel.messages) { message in
-                            ChatBubbleView(message: message)
-                                .id(message.id) // 👈 WICHTIG
-                        }
-
-                        if viewModel.isProcessing {
-                            ProgressView("Khione is thinking…")
-                                .padding(.top)
-                                .id("typing") // 👈 extra Anchor
-                        }
-                    }
-                    .padding(.vertical)
-                }
-                // 🔥 AUTO-SCROLL
-                .onChange(of: viewModel.messages.count) {
-                    scrollToBottom(proxy)
-                }
-                .onChange(of: viewModel.isProcessing) {
-                    scrollToBottom(proxy)
-                }
-            }
-
-            attachmentPreview
-            footerBar
         }
     }
 
-    
+    // MARK: - Attachment Preview
     private var attachmentPreview: some View {
         Group {
-            if let image = selectedImage {
+            if subscription.canUseVision, let image = selectedImage {
                 HStack {
                     Image(uiImage: image)
                         .resizable()
@@ -292,51 +257,24 @@ struct KhioneView: View {
         }
     }
 
-    private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        DispatchQueue.main.async {
-            if let lastID = viewModel.messages.last?.id {
-                withAnimation(.easeOut(duration: 0.25)) {
-                    proxy.scrollTo(lastID, anchor: .bottom)
-                }
-            }
-        }
-    }
-    
-    private func formatTime(_ interval: TimeInterval) -> String {
-        let minutes = Int(interval) / 60
-        let hours = minutes / 60
-        let remainingMinutes = minutes % 60
-
-        if hours > 0 {
-            return "\(hours)h \(remainingMinutes)m"
-        } else {
-            return "\(remainingMinutes)m"
-        }
-    }
-
-
-    
-    // MARK: - Helpers
+    // MARK: - Logic
     private var canSend: Bool {
         !viewModel.isProcessing &&
         viewModel.selectedMode != nil &&
         (
-            !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || selectedImage != nil
+            !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            (selectedImage != nil && subscription.canUseVision)
         )
     }
 
-    
-    private func runIfPossible() {
+    private func handleSend() {
         guard canSend else { return }
-
-        // 🔒 Message Limit
         guard subscription.canSendMessage else {
             showUpgradeSheet = true
             return
         }
 
-        // 🔒 Vision Lock
+        // If an image is attached but Vision is locked, prompt upgrade
         if selectedImage != nil && !subscription.canUseVision {
             showUpgradeSheet = true
             return
@@ -344,20 +282,51 @@ struct KhioneView: View {
 
         isInputFocused = false
 
-        viewModel.send(
-            text: inputText,
-            image: selectedImage
-        )
-
+        viewModel.send(text: inputText, image: selectedImage)
         subscription.consumeMessageIfNeeded()
 
         inputText = ""
         selectedImage = nil
     }
+
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        if let lastID = viewModel.messages.last?.id {
+            withAnimation(.easeOut(duration: 0.25)) {
+                proxy.scrollTo(lastID, anchor: .bottom)
+            }
+        }
+    }
 }
 
+struct RefillCountdownView: View {
+    let nextRefillDate: Date
 
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let remaining = max(
+                nextRefillDate.timeIntervalSince(context.date),
+                0
+            )
 
+            Text("Nächste Nachricht in \(format(remaining))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private func format(_ interval: TimeInterval) -> String {
+        let totalSeconds = Int(interval)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+
+        if hours > 0 {
+            return String(format: "%02dh %02dm %02ds", hours, minutes, seconds)
+        } else {
+            return String(format: "%02dm %02ds", minutes, seconds)
+        }
+    }
+}
 
 #Preview {
     let storeKit = StoreKitManager()

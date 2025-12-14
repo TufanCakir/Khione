@@ -5,7 +5,7 @@
 
 import Foundation
 import SwiftUI
-import Combine
+internal import Combine
 
 @MainActor
 final class ThemeManager: ObservableObject {

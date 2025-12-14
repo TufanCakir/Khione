@@ -6,7 +6,7 @@
 //
 
 import StoreKit
-import Combine
+internal import Combine
 
 @MainActor
 final class StoreKitManager: ObservableObject {
@@ -69,8 +69,7 @@ final class StoreKitManager: ObservableObject {
     }
 
     // MARK: - Helpers
-    func product(for tier: SubscriptionTier) -> Product? {
-        guard let id = tier.productID else { return nil }
-        return products.first { $0.id == id }
+    func product(for productID: String) -> Product? {
+        products.first { $0.id == productID }
     }
 }
