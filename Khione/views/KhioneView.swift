@@ -7,7 +7,6 @@
 
 import SwiftUI
 import StoreKit
-
 struct KhioneView: View {
     
     // MARK: - State & Environment
@@ -64,6 +63,13 @@ struct KhioneView: View {
                         AccountView()
                     } label: {
                         Image(systemName: "person.crop.circle")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        ImagePlaygroundLauncher()
+                    } label: {
+                        Image(systemName: "apple.image.playground")
                     }
                 }
             }
