@@ -25,14 +25,14 @@ struct NoInternetView: View {
 
             // MARK: - Optional Retry Button
             Button {
-                // optional: erneute Prüfung triggern
+                // NWPathMonitor updated automatisch – Button nur UX
             } label: {
                 Label("Erneut versuchen", systemImage: "arrow.clockwise")
-                    .font(.footnote.weight(.medium))
             }
+            .disabled(true)
+            .font(.footnote.weight(.medium))
             .buttonStyle(.bordered)
             .tint(.secondary)
-
         }
         .padding(32)
         .frame(maxWidth: 420)

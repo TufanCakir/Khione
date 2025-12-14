@@ -27,7 +27,7 @@ struct KhioneApp: App {
 
     var body: some Scene {
         WindowGroup {
-            KhioneView()
+            RootView()
                 .environmentObject(internet)
                 .environmentObject(storeKit)
                 .environmentObject(subscription)
