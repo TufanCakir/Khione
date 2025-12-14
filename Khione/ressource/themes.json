@@ -1,0 +1,34 @@
+[
+  {
+    "id": "system",
+    "name": "System",
+    "icon": "circle.lefthalf.filled",
+    "accentColor": "",
+    "backgroundColor": "",
+    "preferredScheme": "system"
+  },
+  {
+    "id": "system_light",
+    "name": "System Light",
+    "icon": "sun.max.circle",
+    "accentColor": "",
+    "backgroundColor": "",
+    "preferredScheme": "light"
+  },
+  {
+    "id": "system_dark",
+    "name": "System Dark",
+    "icon": "moon.circle",
+    "accentColor": "",
+    "backgroundColor": "",
+    "preferredScheme": "dark"
+  },
+  {
+    "id": "ice",
+    "name": "Ice",
+    "icon": "snowflake",
+    "accentColor": "#5AC8FA",
+    "preferredScheme": "dark",
+    "backgroundColor": "#0B1E2D"
+  }
+]

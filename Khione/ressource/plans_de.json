@@ -1,0 +1,31 @@
+[
+  {
+    "id": "free",
+    "name": "Kostenlos",
+    "dailyMessageLimit": 5,
+    "features": [
+      "Basis-Chat",
+      "Begrenzte Nachrichten"
+    ]
+  },
+  {
+    "id": "pro",
+    "name": "Pro",
+    "dailyMessageLimit": 500,
+    "features": [
+      "Unbegrenzter Chat",
+      "Programmiermodus"
+    ]
+  },
+  {
+    "id": "vision",
+    "name": "Vision",
+    "dailyMessageLimit": 1000,
+    "features": [
+      "Alles aus Pro",
+      "Bildanhänge",
+      "Bildbasierte Konversationen",
+      "Zukünftige multimodale Funktionen"
+    ]
+  }
+]

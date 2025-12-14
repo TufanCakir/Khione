@@ -1,0 +1,26 @@
+{
+  "title": "Account",
+
+  "profile_name_placeholder": "Dein Name",
+  "profile_local": "Lokales Khione-Profil",
+
+  "language_section": "Sprache",
+  "language_picker": "App-Sprache",
+  "language_de": "Deutsch",
+  "language_en": "Englisch",
+
+  "subscription_section": "Abonnement",
+  "current_plan": "Aktueller Plan",
+  "upgrade": "Auf Pro oder Vision upgraden",
+  "manage_subscription": "Abonnement verwalten",
+  "active_subscription": "Aktives Abonnement",
+
+  "app_section": "App",
+  "appearance": "Aussehen",
+
+  "about_section": "Über",
+  "version": "Version 1.0",
+  "built_with": "Erstellt mit Apple Foundation Models",
+  "tos": "Nutzungsbedingungen",
+  "privacy": "Datenschutzrichtlinie"
+}
