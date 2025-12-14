@@ -4,9 +4,9 @@
 //
 
 import Foundation
-import StoreKit
-internal import Combine
 import SwiftUI
+internal import Combine
+import StoreKit
 
 @MainActor
 final class SubscriptionManager: ObservableObject {
@@ -19,11 +19,13 @@ final class SubscriptionManager: ObservableObject {
     @AppStorage("khione_language") private var language: String = "en"
 
     // MARK: - Refill System
-    private let refillInterval: TimeInterval = 2 * 60 * 60 // 2 Stunden
+    private let refillInterval: TimeInterval = 2 * 60 * 60
     private let lastConsumeKey = "lastMessageConsumeDate"
+    private let initializedKey = "freeTierInitialized"
 
     // MARK: - Dependencies
     private let storeKit: StoreKitManager
+
     // MARK: - Init
     init(storeKit: StoreKitManager) {
         self.storeKit = storeKit
@@ -33,19 +35,6 @@ final class SubscriptionManager: ObservableObject {
             await syncWithStoreKit()
         }
     }
-
-    private let initializedKey = "freeTierInitialized"
-
-    private var isInitialized: Bool {
-        get { UserDefaults.standard.bool(forKey: initializedKey) }
-        set { UserDefaults.standard.set(newValue, forKey: initializedKey) }
-    }
-
-    // MARK: - Plan Loading
-    func loadPlans() {
-        plans = Bundle.main.loadPlans(language: language)
-    }
-
 
     // MARK: - Persistence
     private var lastConsumeDate: Date {
@@ -58,19 +47,25 @@ final class SubscriptionManager: ObservableObject {
         }
     }
 
+    private var isInitialized: Bool {
+        get { UserDefaults.standard.bool(forKey: initializedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: initializedKey) }
+    }
 
     // MARK: - StoreKit Sync
     func syncWithStoreKit() async {
+        await storeKit.refreshEntitlements()
         tier = storeKit.activeTier
 
-        if tier == .free {
-            if !isInitialized {
-                remainingMessagesToday = dailyMessageLimit
-                lastConsumeDate = Date()
-                isInitialized = true
-            }
-            refillMessagesIfNeeded()
+        guard tier == .free else { return }
+
+        if !isInitialized {
+            remainingMessagesToday = dailyMessageLimit
+            lastConsumeDate = Date()
+            isInitialized = true
         }
+
+        refillMessagesIfNeeded()
     }
 
     // MARK: - Refill Logic
@@ -88,19 +83,22 @@ final class SubscriptionManager: ObservableObject {
             dailyMessageLimit
         )
 
-        lastConsumeDate = now
+        // ⬅️ wichtig: kein Drift
+        lastConsumeDate = lastConsumeDate.addingTimeInterval(
+            TimeInterval(refillCount) * refillInterval
+        )
     }
 
-    // MARK: - Consume Message
+    // MARK: - Consume
     func consumeMessageIfNeeded() {
         guard tier == .free else { return }
 
         refillMessagesIfNeeded()
 
-        if remainingMessagesToday > 0 {
-            remainingMessagesToday -= 1
-            lastConsumeDate = Date()
-        }
+        guard remainingMessagesToday > 0 else { return }
+
+        remainingMessagesToday -= 1
+        lastConsumeDate = Date()
     }
 
     // MARK: - Limits
@@ -111,7 +109,6 @@ final class SubscriptionManager: ObservableObject {
     var nextRefillDate: Date {
         lastConsumeDate.addingTimeInterval(refillInterval)
     }
-
 
     // MARK: - Feature Flags
     var canUseProgrammingMode: Bool { tier != .free }
@@ -128,10 +125,8 @@ final class SubscriptionManager: ObservableObject {
         return storeKit.product(for: productID)?.displayPrice ?? "—"
     }
 
-
-    // MARK: - UX Helper (optional, sehr empfohlen)
-    var nextRefillIn: TimeInterval {
-        let elapsed = Date().timeIntervalSince(lastConsumeDate)
-        return max(refillInterval - elapsed, 0)
+    // MARK: - Plans
+    func loadPlans() {
+        plans = Bundle.main.loadPlans(language: language)
     }
-} 
+}

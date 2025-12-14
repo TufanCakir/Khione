@@ -9,25 +9,25 @@ import SwiftUI
 import StoreKit
 
 struct KhioneView: View {
-
+    
     // MARK: - State & Environment
     @StateObject private var viewModel = ViewModel()
     @EnvironmentObject private var subscription: SubscriptionManager
     @EnvironmentObject private var themeManager: ThemeManager
-
+    
     @State private var showUpgradeSheet = false
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
     @State private var inputText = ""
-
+    
     @FocusState private var isInputFocused: Bool
-
+    
     // MARK: - Body
     var body: some View {
         NavigationStack {
             ZStack {
                 themeBackground
-
+                
                 // Main content
                 VStack(spacing: 0) {
                     // Place your chat view content here
@@ -74,24 +74,24 @@ struct KhioneView: View {
             }
         }
     }
-
+    
     // MARK: - Background
     private var themeBackground: some View {
         themeManager.backgroundColor.ignoresSafeArea()
     }
-
+    
     // MARK: - Chat View
     private var chatView: some View {
         VStack(spacing: 0) {
-
+            
             messagesList
-
+            
             attachmentPreview
             statusHintBar
             footerBar
         }
     }
-
+    
     // MARK: - Messages
     private var messagesList: some View {
         ScrollViewReader { proxy in
@@ -101,7 +101,7 @@ struct KhioneView: View {
                         ChatBubbleView(message: message)
                             .id(message.id)
                     }
-
+                    
                     if viewModel.isProcessing {
                         ProgressView("Khione is thinking…")
                             .padding(.top)
@@ -118,13 +118,13 @@ struct KhioneView: View {
             }
         }
     }
-
+    
     // MARK: - Footer
     private var footerBar: some View {
         HStack(spacing: 10) {
-
+            
             attachmentButton
-
+            
             TextField(
                 "Message Khione…",
                 text: $inputText,
@@ -136,7 +136,7 @@ struct KhioneView: View {
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .animation(.easeOut(duration: 0.2), value: isInputFocused)
-
+            
             if viewModel.isProcessing {
                 stopButton
             } else {
@@ -147,12 +147,12 @@ struct KhioneView: View {
         .padding(.vertical, 8)
         .background(.ultraThinMaterial)
     }
-
+    
     private var attachmentButton: some View {
         Button {
             subscription.canUseVision
-                ? (showImagePicker = true)
-                : (showUpgradeSheet = true)
+            ? (showImagePicker = true)
+            : (showUpgradeSheet = true)
         } label: {
             Image(systemName: "plus")
                 .font(.title3)
@@ -160,23 +160,20 @@ struct KhioneView: View {
         .disabled(!subscription.canUseVision)
         .opacity(subscription.canUseVision ? 1 : 0.35)
     }
-
+    
     // MARK: - Buttons
     private var sendButton: some View {
         Button(action: handleSend) {
-            if subscription.canSendMessage {
-                Image(systemName: "paperplane.fill")
-                    .font(.title3)
-                    .frame(width: 36, height: 36)
-            } else {
-                Text("Limit erreicht")
-                    .font(.footnote.bold())
-                    .padding(.horizontal, 10)
-            }
+            Image(systemName: "paperplane.fill")
+                .font(.title3)
+                .frame(width: 36, height: 36)
         }
         .buttonStyle(.borderedProminent)
-        .disabled(!canSend)
+        .disabled(!canSend || !subscription.canSendMessage)
+        .opacity(subscription.canSendMessage ? 1.0 : 0.4)
     }
+
+      
 
     private var stopButton: some View {
         Button {
@@ -269,7 +266,9 @@ struct KhioneView: View {
 
     private func handleSend() {
         guard canSend else { return }
+
         guard subscription.canSendMessage else {
+            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
             showUpgradeSheet = true
             return
         }

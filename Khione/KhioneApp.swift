@@ -10,30 +10,32 @@ import SwiftUI
 @main
 struct KhioneApp: App {
 
+    // MARK: - Global State
     @StateObject private var storeKit: StoreKitManager
     @StateObject private var subscription: SubscriptionManager
     @StateObject private var themeManager: ThemeManager
     @StateObject private var internet: InternetMonitor
 
+    // MARK: - Init
     init() {
-        let sk = StoreKitManager()
-        _storeKit = StateObject(wrappedValue: sk)
+        let storeKitManager = StoreKitManager()
+
+        _storeKit = StateObject(wrappedValue: storeKitManager)
         _subscription = StateObject(
-            wrappedValue: SubscriptionManager(storeKit: sk)
+            wrappedValue: SubscriptionManager(storeKit: storeKitManager)
         )
         _themeManager = StateObject(wrappedValue: ThemeManager())
         _internet = StateObject(wrappedValue: InternetMonitor())
     }
 
+    // MARK: - Scene
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(internet)
                 .environmentObject(storeKit)
                 .environmentObject(subscription)
                 .environmentObject(themeManager)
+                .environmentObject(internet)
         }
     }
 }
-
-

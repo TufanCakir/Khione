@@ -11,29 +11,31 @@ internal import Combine
 @MainActor
 final class StoreKitManager: ObservableObject {
 
-    @Published var products: [Product] = []
-    @Published var activeTier: SubscriptionTier = .free
+    // MARK: - Published State
+    @Published private(set) var products: [Product] = []
+    @Published private(set) var activeTier: SubscriptionTier = .free
 
+    // MARK: - Product IDs
     private let productIDs: [String] = [
         "khione.pro.monthly",
         "khione.vision.monthly"
     ]
 
+    // MARK: - Init
     init() {
         Task {
             await loadProducts()
+            await observeTransactions()
             await refreshEntitlements()
         }
     }
 
-
-    
     // MARK: - Load Products
     func loadProducts() async {
         do {
             products = try await Product.products(for: productIDs)
         } catch {
-            print("❌ Failed to load products:", error)
+            print("❌ StoreKit: Failed to load products:", error)
         }
     }
 
@@ -50,22 +52,34 @@ final class StoreKitManager: ObservableObject {
         await refreshEntitlements()
     }
 
-    // MARK: - Entitlements
+    // MARK: - Observe Transactions (🔥 WICHTIG)
+    private func observeTransactions() async {
+        for await result in Transaction.updates {
+            guard case .verified(let transaction) = result else { continue }
+
+            await transaction.finish()
+            await refreshEntitlements()
+        }
+    }
+
+    // MARK: - Entitlements (Single Source of Truth)
     func refreshEntitlements() async {
-        activeTier = .free
+        var detectedTier: SubscriptionTier = .free
 
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result else { continue }
 
             switch transaction.productID {
             case "khione.pro.monthly":
-                activeTier = .pro
+                detectedTier = .pro
             case "khione.vision.monthly":
-                activeTier = .vision
+                detectedTier = .vision
             default:
                 break
             }
         }
+
+        activeTier = detectedTier
     }
 
     // MARK: - Helpers
