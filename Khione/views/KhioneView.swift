@@ -5,33 +5,34 @@
 //  Created by Tufan Cakir on 14.12.25.
 //
 
-import SwiftUI
-import StoreKit
 import ImagePlayground
+import StoreKit
+import SwiftUI
+
 struct KhioneView: View {
-    
+
     // MARK: - State & Environment
     @StateObject private var viewModel = ViewModel()
     @EnvironmentObject private var subscription: SubscriptionManager
     @EnvironmentObject private var themeManager: ThemeManager
-    
+
     @State private var showUpgradeSheet = false
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
     @State private var inputText = ""
-    
+
     @FocusState private var isInputFocused: Bool
     @State private var showImagePlayground = false
     @State private var imagePromptCache: String = ""
     @StateObject private var speech = SpeechRecognizer()
     @State private var isListening = false
-    
+
     // MARK: - Body
     var body: some View {
         NavigationStack {
             ZStack {
                 themeBackground
-                
+
                 // Main content
                 VStack(spacing: 0) {
                     // Place your chat view content here
@@ -53,8 +54,10 @@ struct KhioneView: View {
                             Text(viewModel.selectedMode?.name ?? "Khione")
                                 .font(.headline)
                                 .accessibilityLabel("Modus auswählen")
-                                .accessibilityHint("Tippe, um den Chat-Modus zu wechseln")
-                            
+                                .accessibilityHint(
+                                    "Tippe, um den Chat-Modus zu wechseln"
+                                )
+
                             if viewModel.modes.count > 1 {
                                 Image(systemName: "chevron.down")
                                     .font(.caption)
@@ -89,31 +92,30 @@ struct KhioneView: View {
             }
         }
 
-
         .onAppear {
             if viewModel.selectedMode == nil {
                 viewModel.setMode(KhioneModeRegistry.all.first!)
             }
         }
     }
-    
+
     // MARK: - Background
     private var themeBackground: some View {
         themeManager.backgroundColor.ignoresSafeArea()
     }
-    
+
     // MARK: - Chat View
     private var chatView: some View {
         VStack(spacing: 0) {
-            
+
             messagesList
-            
+
             attachmentPreview
             statusHintBar
             footerBar
         }
     }
-    
+
     // MARK: - Messages
     private var messagesList: some View {
         ScrollViewReader { proxy in
@@ -123,7 +125,7 @@ struct KhioneView: View {
                         ChatBubbleView(message: message)
                             .id(message.id)
                     }
-                    
+
                     if viewModel.isProcessing {
                         ProgressView("Khione is thinking…")
                             .padding(.top)
@@ -140,52 +142,41 @@ struct KhioneView: View {
             }
         }
     }
-    
+
     private func autoSendIfPossible() {
         guard canSend else { return }
         handleSend()
     }
 
-    
-    
-    private var speechButton: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-            
-            if isListening {
-                // 🛑 Stop listening
-                speech.stop()
-            } else {
-                // 🎙 Start listening
-                Task {
-                    let allowed = await speech.requestPermission()
-                    guard allowed else { return }
-                    
-                    do {
-                        try speech.start()
-                        isListening = true
-                    } catch {
-                        print("Speech start failed:", error)
-                    }
-                }
-            }
-        } label: {
-            Image(systemName: isListening ? "stop.fill" : "mic.fill")
-                .font(.title3)
-                .foregroundStyle(isListening ? .red : .primary)
-        }
-        .accessibilityLabel(isListening ? "Sprachaufnahme stoppen" : "Sprachaufnahme starten")
+    private var isImageMode: Bool {
+        viewModel.selectedMode?.id == "image"
     }
-    
-    // MARK: - Footer
-    private var footerBar: some View {
+
+    private var imageFooter: some View {
+        HStack {
+            Button {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                isInputFocused = false
+                showImagePlayground = true
+            } label: {
+                Label("Image Playground öffnen", systemImage: "photo.artframe")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.blue)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+    }
+
+    private var chatFooter: some View {
         HStack(spacing: 10) {
-            
+
             attachmentButton
-            
+
             speechButton
                 .disabled(viewModel.isProcessing)
-            
                 .animatedRainbowBorder(
                     active: isListening,
                     lineWidth: 2,
@@ -205,8 +196,6 @@ struct KhioneView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .animation(.easeOut(duration: 0.2), value: isInputFocused)
 
-            
-            
             if viewModel.isProcessing {
                 stopButton
             } else {
@@ -217,12 +206,76 @@ struct KhioneView: View {
         .padding(.vertical, 8)
         .background(.ultraThinMaterial)
     }
-    
+
+    private var speechButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+
+            if isListening {
+                // 🛑 Stop listening
+                speech.stop()
+            } else {
+                // 🎙 Start listening
+                Task {
+                    let allowed = await speech.requestPermission()
+                    guard allowed else { return }
+
+                    do {
+                        try speech.start()
+                        isListening = true
+                    } catch {
+                        print("Speech start failed:", error)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: isListening ? "stop.fill" : "mic.fill")
+                .font(.title3)
+                .foregroundStyle(isListening ? .red : .primary)
+        }
+        .accessibilityLabel(
+            isListening ? "Sprachaufnahme stoppen" : "Sprachaufnahme starten"
+        )
+    }
+
+    // MARK: - Footer
+    private var footerBar: some View {
+        HStack(spacing: 10) {
+
+            attachmentButton
+
+            speechButton
+                .disabled(viewModel.isProcessing)
+
+            TextField(
+                isImageMode
+                    ? "Bild über Image Playground erstellen"
+                    : "Message Khione…",
+                text: $inputText,
+                axis: .vertical
+            )
+            .disabled(isImageMode)  // 👈 WICHTIG
+            .opacity(isImageMode ? 0.6 : 1)
+            .padding(10)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+
+            if viewModel.isProcessing {
+                stopButton
+            } else {
+                sendButton
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+    }
+
     private var attachmentButton: some View {
         Button {
             subscription.canUseVision
-            ? (showImagePicker = true)
-            : (showUpgradeSheet = true)
+                ? (showImagePicker = true)
+                : (showUpgradeSheet = true)
         } label: {
             Image(systemName: "plus")
                 .font(.title3)
@@ -230,7 +283,7 @@ struct KhioneView: View {
         .disabled(!subscription.canUseVision)
         .opacity(subscription.canUseVision ? 1 : 0.35)
     }
-    
+
     // MARK: - Buttons
     private var sendButton: some View {
         Button(action: handleSend) {
@@ -242,8 +295,6 @@ struct KhioneView: View {
         .disabled(!canSend)
         .opacity(canSend ? 1.0 : 0.4)
     }
-
-    
 
     private var stopButton: some View {
         Button {
@@ -260,8 +311,9 @@ struct KhioneView: View {
     // MARK: - Status Hint
     private var statusHintBar: some View {
         Group {
-            if subscription.tier == .free &&
-                (isInputFocused || subscription.remainingMessagesToday == 0) {
+            if subscription.tier == .free
+                && (isInputFocused || subscription.remainingMessagesToday == 0)
+            {
 
                 HStack(spacing: 6) {
 
@@ -289,8 +341,10 @@ struct KhioneView: View {
                 .padding(.vertical, 6)
                 .background(.ultraThinMaterial)
                 .transition(.opacity)
-                .animation(.easeInOut(duration: 0.2),
-                           value: subscription.remainingMessagesToday)
+                .animation(
+                    .easeInOut(duration: 0.2),
+                    value: subscription.remainingMessagesToday
+                )
             }
         }
     }
@@ -326,13 +380,10 @@ struct KhioneView: View {
 
     // MARK: - Logic
     private var canSend: Bool {
-        !viewModel.isProcessing &&
-        viewModel.selectedMode != nil &&
-        !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !viewModel.isProcessing && viewModel.selectedMode != nil
+            && !inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
     }
-
-
-
 
     private func handleSend() {
 
@@ -368,8 +419,6 @@ struct KhioneView: View {
         inputText = ""
         selectedImage = nil
     }
-
-    
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         if let lastID = viewModel.messages.last?.id {
@@ -419,4 +468,3 @@ struct RefillCountdownView: View {
         .environmentObject(subscription)
         .environmentObject(ThemeManager())
 }
-
