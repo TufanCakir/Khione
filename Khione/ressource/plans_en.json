@@ -2,30 +2,86 @@
   {
     "id": "free",
     "name": "Free",
-    "dailyMessageLimit": 5,
+    "dailyMessageLimit": 20,
+    "allowedModes": [
+      "chat",
+      "tutor",
+      "writer",
+      "decision",
+      "polite",
+      "strict",
+      "accessibility"
+    ],
     "features": [
-      "Basic chat",
-      "Limited messages"
+      "Chat & creative modes",
+      "Tutor and writing mode",
+      "Accessibility & voice input",
+      "Clear decisions & factual answers"
     ]
   },
   {
     "id": "pro",
     "name": "Pro",
-    "dailyMessageLimit": 500,
+    "dailyMessageLimit": 200,
+    "allowedModes": [
+      "chat",
+      "tutor",
+      "writer",
+      "decision",
+      "polite",
+      "strict",
+      "accessibility",
+      "tech",
+      "programming",
+      "analysis",
+      "debug",
+      "refactor"
+    ],
     "features": [
-      "Unlimited chat",
-      "Programming mode"
+      "All Free modes",
+      "Technical & programming mode",
+      "Analysis, debug & refactor",
+      "Productive workflows"
     ]
   },
   {
     "id": "vision",
     "name": "Vision",
-    "dailyMessageLimit": 1000,
+    "dailyMessageLimit": 2000,
+    "allowedModes": [
+      "chat",
+      "tutor",
+      "writer",
+      "decision",
+      "polite",
+      "strict",
+      "accessibility",
+      "tech",
+      "programming",
+      "analysis",
+      "debug",
+      "refactor",
+      "architect",
+      "security",
+      "image"
+    ],
     "features": [
-      "Everything in Pro",
-      "Image attachments",
-      "Image-based conversations",
-      "Future multimodal features"
+      "All Pro modes",
+      "Architecture & security mode",
+      "Image mode & image attachments",
+      "Apple Intelligence Image Playground"
+    ]
+  },
+  {
+    "id": "infinity",
+    "name": "Infinity",
+    "dailyMessageLimit": 20000,
+    "allowedModes": "all",
+    "features": [
+      "Everything unlocked",
+      "All modes including Vision",
+      "Apple Intelligence Image Playground",
+      "Maximum usage"
     ]
   }
 ]

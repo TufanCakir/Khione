@@ -12,6 +12,7 @@ struct SubscriptionLocalization: Decodable {
     let subtitle: String
     let subscribe: String
     let restore: String
+    let active: String   // ✅ NEU
 }
 
 extension Bundle {
@@ -33,4 +34,3 @@ extension Bundle {
         return decoded
     }
 }
-

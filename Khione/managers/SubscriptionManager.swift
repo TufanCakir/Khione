@@ -5,118 +5,96 @@
 
 import Foundation
 import SwiftUI
-internal import Combine
 import StoreKit
+internal import Combine
 
 @MainActor
 final class SubscriptionManager: ObservableObject {
 
-    // MARK: - Published State
+    // MARK: - Published
     @Published private(set) var tier: SubscriptionTier = .free
-    @Published private(set) var remainingMessagesToday: Int = 0
+    @Published private(set) var plan: SubscriptionPlan
     @Published private(set) var plans: [SubscriptionPlan] = []
-
-    @AppStorage("khione_language") private var language: String = "en"
-
-    // MARK: - Refill System
-    private let refillInterval: TimeInterval = 2 * 60 * 60
-    private let lastConsumeKey = "lastMessageConsumeDate"
-    private let initializedKey = "freeTierInitialized"
+    @Published private(set) var remainingMessagesToday: Int = 0
 
     // MARK: - Dependencies
     private let storeKit: StoreKitManager
+    private let allModes = KhioneModeRegistry.all
+
+    // MARK: - Language (State only, NOT used in init)
+    @AppStorage("khione_language") private var language: String = "en"
 
     // MARK: - Init
     init(storeKit: StoreKitManager) {
         self.storeKit = storeKit
-        loadPlans()
 
-        Task {
-            await syncWithStoreKit()
+        // ✅ SAFE: AppStorage NICHT verwenden
+        let initialLanguage =
+            UserDefaults.standard.string(forKey: "khione_language") ?? "en"
+
+        let loadedPlans = Bundle.main.loadPlans(language: initialLanguage)
+        self.plans = loadedPlans
+        self.plan = loadedPlans.first { $0.id == "free" }!
+
+        Task { await syncWithStoreKit() }
+    }
+
+    // MARK: - Reload when language changes
+    func reloadPlans() {
+        let loadedPlans = Bundle.main.loadPlans(language: language)
+        plans = loadedPlans
+
+        if let active = loadedPlans.first(where: { $0.id == tier.rawValue }) {
+            plan = active
+        } else if let free = loadedPlans.first(where: { $0.id == "free" }) {
+            plan = free
         }
     }
 
-    // MARK: - Persistence
-    private var lastConsumeDate: Date {
-        get {
-            UserDefaults.standard.object(forKey: lastConsumeKey) as? Date
-            ?? .distantPast
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: lastConsumeKey)
-        }
-    }
-
-    private var isInitialized: Bool {
-        get { UserDefaults.standard.bool(forKey: initializedKey) }
-        set { UserDefaults.standard.set(newValue, forKey: initializedKey) }
-    }
-
-    // MARK: - StoreKit Sync
+    // MARK: - StoreKit
     func syncWithStoreKit() async {
         await storeKit.refreshEntitlements()
-        tier = storeKit.activeTier
+        applyTier(storeKit.activeTier)
+    }
 
-        guard tier == .free else { return }
-
-        if !isInitialized {
-            remainingMessagesToday = dailyMessageLimit
-            lastConsumeDate = Date()
-            isInitialized = true
-        }
-
+    private func applyTier(_ newTier: SubscriptionTier) {
+        tier = newTier
+        reloadPlans()
+        initializeFreeIfNeeded()
         refillMessagesIfNeeded()
     }
 
-    // MARK: - Refill Logic
-    func refillMessagesIfNeeded() {
-        guard tier == .free else { return }
-
-        let now = Date()
-        let elapsed = now.timeIntervalSince(lastConsumeDate)
-        let refillCount = Int(elapsed / refillInterval)
-
-        guard refillCount > 0 else { return }
-
-        remainingMessagesToday = min(
-            remainingMessagesToday + refillCount,
-            dailyMessageLimit
-        )
-
-        // ⬅️ wichtig: kein Drift
-        lastConsumeDate = lastConsumeDate.addingTimeInterval(
-            TimeInterval(refillCount) * refillInterval
-        )
+    // MARK: - Allowed Modes
+    func allowedModes() -> [KhioneMode] {
+        switch plan.allowedModes {
+        case .all:
+            return allModes
+        case .list(let ids):
+            return allModes.filter { ids.contains($0.id) }
+        }
     }
 
-    // MARK: - Consume
+    // MARK: - Vision
+    var canUseVision: Bool {
+        allowedModes().contains { $0.id == "image" }
+    }
+
+    // MARK: - Messaging
+    var canSendMessage: Bool {
+        tier != .free || remainingMessagesToday > 0
+    }
+
     func consumeMessageIfNeeded() {
         guard tier == .free else { return }
-
         refillMessagesIfNeeded()
-
         guard remainingMessagesToday > 0 else { return }
 
         remainingMessagesToday -= 1
         lastConsumeDate = Date()
     }
 
-    // MARK: - Limits
     var dailyMessageLimit: Int {
-        plans.first { $0.id == tier.rawValue }?.dailyMessageLimit ?? 0
-    }
-
-    var nextRefillDate: Date {
-        lastConsumeDate.addingTimeInterval(refillInterval)
-    }
-
-    // MARK: - Feature Flags
-    var canUseProgrammingMode: Bool { tier != .free }
-    var canUseUnlimitedChat: Bool { tier != .free }
-    var canUseVision: Bool { tier == .vision }
-
-    var canSendMessage: Bool {
-        canUseUnlimitedChat || remainingMessagesToday > 0
+        plan.dailyMessageLimit
     }
 
     // MARK: - Pricing
@@ -125,8 +103,46 @@ final class SubscriptionManager: ObservableObject {
         return storeKit.product(for: productID)?.displayPrice ?? "—"
     }
 
-    // MARK: - Plans
-    func loadPlans() {
-        plans = Bundle.main.loadPlans(language: language)
+    // MARK: - Refill System
+    private let refillInterval: TimeInterval = 2 * 60 * 60
+    private let lastConsumeKey = "lastMessageConsumeDate"
+    private let initializedKey = "freeTierInitialized"
+
+    private func initializeFreeIfNeeded() {
+        guard tier == .free, !isInitialized else { return }
+        remainingMessagesToday = dailyMessageLimit
+        lastConsumeDate = Date()
+        isInitialized = true
+    }
+
+    private func refillMessagesIfNeeded() {
+        guard tier == .free else { return }
+
+        let elapsed = Date().timeIntervalSince(lastConsumeDate)
+        let refillCount = Int(elapsed / refillInterval)
+        guard refillCount > 0 else { return }
+
+        remainingMessagesToday = min(
+            remainingMessagesToday + refillCount,
+            dailyMessageLimit
+        )
+
+        lastConsumeDate = lastConsumeDate.addingTimeInterval(
+            TimeInterval(refillCount) * refillInterval
+        )
+    }
+
+    var nextRefillDate: Date {
+        lastConsumeDate.addingTimeInterval(refillInterval)
+    }
+
+    private var lastConsumeDate: Date {
+        get { UserDefaults.standard.object(forKey: lastConsumeKey) as? Date ?? .distantPast }
+        set { UserDefaults.standard.set(newValue, forKey: lastConsumeKey) }
+    }
+
+    private var isInitialized: Bool {
+        get { UserDefaults.standard.bool(forKey: initializedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: initializedKey) }
     }
 }

@@ -48,6 +48,9 @@ struct ChatBubbleView: View {
         .padding(12)
         .background(bubbleBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18))
+        .if(message.role == .assistant) { view in
+            view.rainbowBorder()
+        }
         .frame(maxWidth: 280, alignment: alignment)
     }
     

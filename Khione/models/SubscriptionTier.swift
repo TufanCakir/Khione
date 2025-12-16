@@ -11,6 +11,7 @@ enum SubscriptionTier: String, Codable, Identifiable {
     case free
     case pro
     case vision
+    case infinity
 
     var id: String { rawValue }
 
@@ -22,6 +23,9 @@ enum SubscriptionTier: String, Codable, Identifiable {
             return "khione.pro.monthly"
         case .vision:
             return "khione.vision.monthly"
+        case .infinity:
+            return "khione.infinity.monthly"
+
         }
     }
 
@@ -30,6 +34,7 @@ enum SubscriptionTier: String, Codable, Identifiable {
         case .free: return "Free"
         case .pro: return "Pro"
         case .vision: return "Vision"
+        case .infinity: return "Infinity"
         }
     }
 }

@@ -14,6 +14,10 @@ struct KhioneMode: Identifiable, Decodable {
     let systemPrompt: String
 }
 
+
+
+
+
 extension Bundle {
     func loadKhioneModes() -> [KhioneMode] {
         guard let url = url(forResource: "khione_modes", withExtension: "json"),

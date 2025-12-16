@@ -7,6 +7,7 @@
 
 import SwiftUI
 import StoreKit
+import ImagePlayground
 struct KhioneView: View {
     
     // MARK: - State & Environment
@@ -20,6 +21,10 @@ struct KhioneView: View {
     @State private var inputText = ""
     
     @FocusState private var isInputFocused: Bool
+    @State private var showImagePlayground = false
+    @State private var imagePromptCache: String = ""
+    @StateObject private var speech = SpeechRecognizer()
+    @State private var isListening = false
     
     // MARK: - Body
     var body: some View {
@@ -36,9 +41,8 @@ struct KhioneView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Menu {
-                        ForEach(viewModel.modes.filter { $0.id != "programming" || subscription.canUseProgrammingMode }) { mode in
+                        ForEach(subscription.allowedModes()) { mode in
                             Button {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                 viewModel.setMode(mode)
                             } label: {
                                 Label(mode.name, systemImage: mode.icon)
@@ -50,6 +54,7 @@ struct KhioneView: View {
                                 .font(.headline)
                                 .accessibilityLabel("Modus auswählen")
                                 .accessibilityHint("Tippe, um den Chat-Modus zu wechseln")
+                            
                             if viewModel.modes.count > 1 {
                                 Image(systemName: "chevron.down")
                                     .font(.caption)
@@ -65,18 +70,29 @@ struct KhioneView: View {
                         Image(systemName: "person.crop.circle")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ImagePlaygroundLauncher()
-                    } label: {
-                        Image(systemName: "apple.image.playground")
-                    }
-                }
             }
         }
+        .imagePlaygroundSheet(
+            isPresented: $showImagePlayground,
+            onCompletion: { _ in
+                // Optional: Result speichern / ignorieren
+            }
+        )
         .sheet(isPresented: $showImagePicker) {
             if subscription.canUseVision {
                 ImagePicker(image: $selectedImage)
+            }
+        }
+        .onChange(of: speech.transcript) { _, newValue in
+            if isListening {
+                inputText = newValue
+            }
+        }
+
+
+        .onAppear {
+            if viewModel.selectedMode == nil {
+                viewModel.setMode(KhioneModeRegistry.all.first!)
             }
         }
     }
@@ -125,15 +141,61 @@ struct KhioneView: View {
         }
     }
     
+    private func autoSendIfPossible() {
+        guard canSend else { return }
+        handleSend()
+    }
+
+    
+    
+    private var speechButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            
+            if isListening {
+                // 🛑 Stop listening
+                speech.stop()
+            } else {
+                // 🎙 Start listening
+                Task {
+                    let allowed = await speech.requestPermission()
+                    guard allowed else { return }
+                    
+                    do {
+                        try speech.start()
+                        isListening = true
+                    } catch {
+                        print("Speech start failed:", error)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: isListening ? "stop.fill" : "mic.fill")
+                .font(.title3)
+                .foregroundStyle(isListening ? .red : .primary)
+        }
+        .accessibilityLabel(isListening ? "Sprachaufnahme stoppen" : "Sprachaufnahme starten")
+    }
+    
     // MARK: - Footer
     private var footerBar: some View {
         HStack(spacing: 10) {
             
             attachmentButton
             
+            speechButton
+                .disabled(viewModel.isProcessing)
+            
+                .animatedRainbowBorder(
+                    active: isListening,
+                    lineWidth: 2,
+                    radius: 14
+                )
+
             TextField(
                 "Message Khione…",
                 text: $inputText,
+                prompt: Text("Message Khione…"),
                 axis: .vertical
             )
             .focused($isInputFocused)
@@ -142,6 +204,8 @@ struct KhioneView: View {
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .animation(.easeOut(duration: 0.2), value: isInputFocused)
+
+            
             
             if viewModel.isProcessing {
                 stopButton
@@ -175,11 +239,11 @@ struct KhioneView: View {
                 .frame(width: 36, height: 36)
         }
         .buttonStyle(.borderedProminent)
-        .disabled(!canSend || !subscription.canSendMessage)
-        .opacity(subscription.canSendMessage ? 1.0 : 0.4)
+        .disabled(!canSend)
+        .opacity(canSend ? 1.0 : 0.4)
     }
 
-      
+    
 
     private var stopButton: some View {
         Button {
@@ -264,35 +328,48 @@ struct KhioneView: View {
     private var canSend: Bool {
         !viewModel.isProcessing &&
         viewModel.selectedMode != nil &&
-        (
-            !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-            (selectedImage != nil && subscription.canUseVision)
-        )
+        !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private func handleSend() {
-        guard canSend else { return }
 
+
+
+    private func handleSend() {
+
+        guard let mode = viewModel.selectedMode else { return }
+
+        // 🖼 IMAGE MODE
+        if mode.id == "image" {
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            isInputFocused = false
+            imagePromptCache = inputText
+            inputText = ""
+            showImagePlayground = true
+            return
+        }
+
+        // 🔒 Subscription Check
         guard subscription.canSendMessage else {
-            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
             showUpgradeSheet = true
             return
         }
 
-        // If an image is attached but Vision is locked, prompt upgrade
+        // 📎 Vision Check
         if selectedImage != nil && !subscription.canUseVision {
             showUpgradeSheet = true
             return
         }
 
+        // ✅ SEND
         isInputFocused = false
-
         viewModel.send(text: inputText, image: selectedImage)
         subscription.consumeMessageIfNeeded()
 
         inputText = ""
         selectedImage = nil
     }
+
+    
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         if let lastID = viewModel.messages.last?.id {
@@ -342,3 +419,4 @@ struct RefillCountdownView: View {
         .environmentObject(subscription)
         .environmentObject(ThemeManager())
 }
+

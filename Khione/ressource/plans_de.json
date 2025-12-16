@@ -2,30 +2,86 @@
   {
     "id": "free",
     "name": "Kostenlos",
-    "dailyMessageLimit": 5,
+    "dailyMessageLimit": 20,
+    "allowedModes": [
+      "chat",
+      "tutor",
+      "writer",
+      "decision",
+      "polite",
+      "strict",
+      "accessibility"
+    ],
     "features": [
-      "Basis-Chat",
-      "Begrenzte Nachrichten"
+      "Chat & kreative Modi",
+      "Tutor- und Schreibmodus",
+      "Accessibility & Voice",
+      "Klare Entscheidungen & Fakten"
     ]
   },
   {
     "id": "pro",
     "name": "Pro",
-    "dailyMessageLimit": 500,
+    "dailyMessageLimit": 200,
+    "allowedModes": [
+      "chat",
+      "tutor",
+      "writer",
+      "decision",
+      "polite",
+      "strict",
+      "accessibility",
+      "tech",
+      "programming",
+      "analysis",
+      "debug",
+      "refactor"
+    ],
     "features": [
-      "Unbegrenzter Chat",
-      "Programmiermodus"
+      "Alle Free-Modi",
+      "Technischer & Programmiermodus",
+      "Analyse, Debug & Refactor",
+      "Produktives Arbeiten"
     ]
   },
   {
     "id": "vision",
     "name": "Vision",
-    "dailyMessageLimit": 1000,
+    "dailyMessageLimit": 2000,
+    "allowedModes": [
+      "chat",
+      "tutor",
+      "writer",
+      "decision",
+      "polite",
+      "strict",
+      "accessibility",
+      "tech",
+      "programming",
+      "analysis",
+      "debug",
+      "refactor",
+      "architect",
+      "security",
+      "image"
+    ],
     "features": [
-      "Alles aus Pro",
-      "Bildanhänge",
-      "Bildbasierte Konversationen",
-      "Zukünftige multimodale Funktionen"
+      "Alle Pro-Modi",
+      "Architektur- & Sicherheitsmodus",
+      "Bild-Modus & Bildanhänge",
+      "Apple Intelligence Image Playground"
+    ]
+  },
+  {
+    "id": "infinity",
+    "name": "Infinity",
+    "dailyMessageLimit": 20000,
+    "allowedModes": "all",
+    "features": [
+      "Alles freigeschaltet",
+      "Alle Modi inklusive Vision",
+      "Apple Intelligence Image Playground",
+      "Maximale Nutzung"
     ]
   }
 ]

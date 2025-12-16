@@ -22,13 +22,5 @@
     "accentColor": "",
     "backgroundColor": "",
     "preferredScheme": "dark"
-  },
-  {
-    "id": "ice",
-    "name": "Ice",
-    "icon": "snowflake",
-    "accentColor": "#5AC8FA",
-    "preferredScheme": "dark",
-    "backgroundColor": "#0B1E2D"
   }
 ]

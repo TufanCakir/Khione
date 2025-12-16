@@ -5,8 +5,8 @@
 //  Created by Tufan Cakir on 14.12.25.
 //
 
-import StoreKit
 internal import Combine
+import StoreKit
 
 @MainActor
 final class StoreKitManager: ObservableObject {
@@ -18,7 +18,8 @@ final class StoreKitManager: ObservableObject {
     // MARK: - Product IDs
     private let productIDs: [String] = [
         "khione.pro.monthly",
-        "khione.vision.monthly"
+        "khione.vision.monthly",
+        "khione.infinity.monthly",
     ]
 
     // MARK: - Init
@@ -74,6 +75,8 @@ final class StoreKitManager: ObservableObject {
                 detectedTier = .pro
             case "khione.vision.monthly":
                 detectedTier = .vision
+            case "khione.infinity.monthly":
+                detectedTier = .infinity
             default:
                 break
             }

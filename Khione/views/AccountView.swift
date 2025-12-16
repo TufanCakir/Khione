@@ -14,18 +14,17 @@ struct AccountView: View {
     @AppStorage("khione_username") private var username: String = ""
     private let tosURL = URL(string: "https://khione-tos.netlify.app/")!
     private let privacyURL = URL(string: "https://khione-privacy.netlify.app/")!
-    @AppStorage("khione_language") private var language: String = Locale.current.language.languageCode?.identifier ?? "en"
+    @AppStorage("khione_language") private var language: String =
+        Locale.current.language.languageCode?.identifier ?? "en"
     private var text: AccountLocalization {
         Bundle.main.loadAccountLocalization(language: language)
     }
-
 
     private var initials: String {
         let parts = username.split(separator: " ")
         let letters = parts.prefix(2).compactMap { $0.first }
         return letters.map { String($0).uppercased() }.joined()
     }
-
 
     var body: some View {
         NavigationStack {
@@ -46,18 +45,17 @@ struct AccountView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .environment(\.locale, Locale(identifier: language))
-        }
     }
-
+}
 
 // MARK: - Sections
-private extension AccountView {
-    
+extension AccountView {
+
     // 👤 PROFIL
-    var profileSection: some View {
+    fileprivate var profileSection: some View {
         Section {
             VStack(spacing: 12) {
-                
+
                 // Avatar
                 Circle()
                     .fill(Color.accentColor)
@@ -67,14 +65,14 @@ private extension AccountView {
                             .font(.title.bold())
                             .foregroundColor(.white)
                     )
-                
+
                 // Name Input
                 TextField(text.profile_name_placeholder, text: $username)
                     .font(.title3.bold())
                     .multilineTextAlignment(.center)
                     .textInputAutocapitalization(.words)
                     .disableAutocorrection(true)
-                
+
                 Text(text.profile_local)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -83,9 +81,9 @@ private extension AccountView {
             .padding(.vertical, 12)
         }
     }
-    
+
     // 🌍 SPRACHE
-    var languageSection: some View {
+    fileprivate var languageSection: some View {
         Section(text.language_section) {
             Picker(text.language_picker, selection: $language) {
                 Text(text.language_de).tag("de")
@@ -93,20 +91,30 @@ private extension AccountView {
             }
             .pickerStyle(.segmented)
             .onChange(of: language) {
-                subscription.loadPlans()   // ✅ Abo-Pläne neu laden
+                subscription.reloadPlans()
             }
         }
     }
 
-    
     // 💳 ABO
-    var subscriptionSection: some View {
+    fileprivate var subscriptionSection: some View {
         Section(text.subscription_section) {
+
             HStack {
                 Label(text.current_plan, systemImage: "crown")
                 Spacer()
+
                 Text(subscription.tier.displayName)
-                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(
+                                subscription.tier == .free
+                                    ? Color.secondary.opacity(0.15)
+                                    : Color.accentColor.opacity(0.15)
+                            )
+                    )
             }
 
             NavigationLink {
@@ -114,21 +122,26 @@ private extension AccountView {
             } label: {
                 Label(
                     subscription.tier == .free
-                    ? text.upgrade
-                    : text.manage_subscription,
+                        ? text.upgrade
+                        : text.manage_subscription,
                     systemImage: "eurosign.circle"
                 )
             }
 
             if subscription.tier != .free {
-                Label(text.active_subscription, systemImage: "checkmark.seal.fill")
-                    .foregroundColor(.green)
+                HStack {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundColor(.green)
+
+                    Text(text.active_subscription)
+                        .foregroundColor(.green)
+                }
             }
         }
     }
-    
+
     // ⚙️ APP
-    var appSection: some View {
+    fileprivate var appSection: some View {
         Section(text.app_section) {
             NavigationLink {
                 AppearanceView()
@@ -137,9 +150,9 @@ private extension AccountView {
             }
         }
     }
-    
+
     // ℹ️ ÜBER
-    var aboutSection: some View {
+    fileprivate var aboutSection: some View {
         Section(text.about_section) {
             Label("Khione", systemImage: "sparkles")
             Label(text.version, systemImage: "number")
@@ -155,9 +168,6 @@ private extension AccountView {
         }
     }
 }
-
-
-
 
 // MARK: - Preview
 #Preview {
