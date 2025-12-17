@@ -2,47 +2,79 @@
 //  AnimatedRainbowBorder.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 16.12.25.
-//
 
 import SwiftUI
 
 struct AnimatedRainbowBorder: ViewModifier {
-    @State private var angle: Double = 0
+
     let lineWidth: CGFloat
     let cornerRadius: CGFloat
     let isActive: Bool
 
+    @State private var angle: Double = 0
+
     func body(content: Content) -> some View {
         content
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(
-                        AngularGradient(
-                            colors: [
-                                                      .cyan,
-                                                      .blue,
-                                                      .purple,
-                                                      .pink,
-                                                      .orange,
-                                                      .cyan
-                                                  ],
-                            center: .center,
-                            angle: .degrees(angle)
-                        ),
-                        lineWidth: isActive ? lineWidth : 0
-                    )
-            )
+            .overlay(borderOverlay)
             .onAppear {
-                guard isActive else { return }
-                withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) {
-                    angle = 360
+                startIfNeeded()
+            }
+            .onChange(of: isActive) { _, newValue in
+                if newValue {
+                    startIfNeeded()
+                } else {
+                    stop()
                 }
             }
+    }
+
+    // MARK: - Overlay
+    @ViewBuilder
+    private var borderOverlay: some View {
+        if isActive {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(
+                    AngularGradient(
+                        colors: rainbowColors,
+                        center: .center,
+                        angle: .degrees(angle)
+                    ),
+                    lineWidth: lineWidth
+                )
+        }
+    }
+
+    // MARK: - Animation Control
+    private func startIfNeeded() {
+        angle = 0
+        withAnimation(
+            .linear(duration: 2.8)
+            .repeatForever(autoreverses: false)
+        ) {
+            angle = 360
+        }
+    }
+
+    private func stop() {
+        angle = 0
+    }
+
+    // MARK: - Colors
+    private var rainbowColors: [Color] {
+        [
+            .cyan,
+            .blue,
+            .purple,
+            .pink,
+            .orange,
+            .yellow,
+            .cyan
+        ]
     }
 }
 
 extension View {
+
     func animatedRainbowBorder(
         active: Bool,
         lineWidth: CGFloat = 3,

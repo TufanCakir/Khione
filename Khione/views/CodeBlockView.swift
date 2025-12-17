@@ -2,54 +2,77 @@
 //  CodeBlockView.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
-//
 
 import SwiftUI
 
 struct CodeBlockView: View {
-    
+
     let code: String
     let canCopy: Bool
-    
+
     @State private var copied = false
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            
-            HStack {
-                Text("Code")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                if canCopy {
-                    Button {
-                        UIPasteboard.general.string = code
-                        copied = true
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                            copied = false
-                        }
-                    } label: {
-                        Label(copied ? "Copied" : "Copy",
-                              systemImage: copied ? "checkmark" : "doc.on.doc")
-                    }
-                    .font(.caption)
+        VStack(alignment: .leading, spacing: 10) {
+
+            header
+
+            codeArea
+        }
+    }
+
+    // MARK: - Header
+    private var header: some View {
+        HStack {
+            Label("Code", systemImage: "chevron.left.slash.chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Spacer()
+
+            if canCopy {
+                Button(action: copy) {
+                    Label(
+                        copied ? "Copied" : "Copy",
+                        systemImage: copied ? "checkmark.circle.fill" : "doc.on.doc"
+                    )
                 }
+                .font(.caption)
+                .foregroundColor(copied ? .green : .secondary)
+                .animation(.easeInOut(duration: 0.2), value: copied)
             }
-            
-            ScrollView(.horizontal) {
-                Text(code)
-                    .font(.system(.body, design: .monospaced))
-                    .padding()
-            }
-            .background(Color.black.opacity(0.85))
-            .foregroundColor(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    // MARK: - Code Area
+    private var codeArea: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            Text(code)
+                .font(.system(.body, design: .monospaced))
+                .foregroundColor(.white)
+                .padding(12)
+                .textSelection(.enabled)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.88))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+        .accessibilityLabel("Code block")
+    }
+
+    // MARK: - Copy Logic
+    private func copy() {
+        UIPasteboard.general.string = code
+        copied = true
+
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            copied = false
         }
     }
 }
-

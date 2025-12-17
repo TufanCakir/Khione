@@ -2,8 +2,6 @@
 //  KhioneApp.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
-//
 
 import SwiftUI
 
@@ -32,10 +30,15 @@ struct KhioneApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                // MARK: - Environment
                 .environmentObject(storeKit)
                 .environmentObject(subscription)
                 .environmentObject(themeManager)
                 .environmentObject(internet)
+
+                // MARK: - Theme Application
+                .preferredColorScheme(themeManager.colorScheme)
+                .tint(themeManager.accentColor)
         }
     }
 }

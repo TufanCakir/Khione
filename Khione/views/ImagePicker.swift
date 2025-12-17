@@ -2,41 +2,59 @@
 //  ImagePicker.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
-//
 
 import SwiftUI
-import UIKit
+import PhotosUI
 
 struct ImagePicker: UIViewControllerRepresentable {
 
     @Binding var image: UIImage?
 
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        configuration.selectionLimit = 1
+        configuration.filter = .images
+
+        let picker = PHPickerViewController(configuration: configuration)
         picker.delegate = context.coordinator
         return picker
     }
 
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    func updateUIViewController(
+        _ uiViewController: PHPickerViewController,
+        context: Context
+    ) {}
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
-    final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let parent: ImagePicker
+    // MARK: - Coordinator
+    final class Coordinator: NSObject, PHPickerViewControllerDelegate {
+
+        private let parent: ImagePicker
 
         init(_ parent: ImagePicker) {
             self.parent = parent
         }
 
-        func imagePickerController(
-            _ picker: UIImagePickerController,
-            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]
+        func picker(
+            _ picker: PHPickerViewController,
+            didFinishPicking results: [PHPickerResult]
         ) {
-            parent.image = info[.originalImage] as? UIImage
             picker.dismiss(animated: true)
+
+            guard
+                let provider = results.first?.itemProvider,
+                provider.canLoadObject(ofClass: UIImage.self)
+            else { return }
+
+            provider.loadObject(ofClass: UIImage.self) { image, _ in
+                DispatchQueue.main.async {
+                    self.parent.image = image as? UIImage
+                }
+            }
         }
     }
 }

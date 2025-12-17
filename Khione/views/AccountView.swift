@@ -2,8 +2,6 @@
 //  AccountView.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
-//
 
 import SwiftUI
 
@@ -12,6 +10,7 @@ struct AccountView: View {
     // MARK: - Environment
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var subscription: SubscriptionManager
+    @Environment(\.dismiss) private var dismiss
 
     // MARK: - Storage
     @AppStorage("khione_username") private var username = ""
@@ -43,7 +42,8 @@ struct AccountView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            themeManager.backgroundColor.ignoresSafeArea()
+            themeManager.backgroundColor
+                .ignoresSafeArea()
 
             List {
                 profileSection
@@ -57,12 +57,21 @@ struct AccountView: View {
         .navigationTitle(text.title)
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.locale, Locale(identifier: language))
+        .toolbar {
+            ToolbarItem(placement: .keyboard) {
+                Button("Done") {
+                    UIApplication.shared.dismissKeyboard()
+                }
+            }
+        }
     }
+}
 
-    @ViewBuilder
-    private var profileSection: some View {
+private extension AccountView {
+
+    var profileSection: some View {
         Section {
-            VStack(spacing: 12) {
+            VStack(spacing: 14) {
 
                 Circle()
                     .fill(Color.accentColor)
@@ -72,14 +81,16 @@ struct AccountView: View {
                             .font(.title.bold())
                             .foregroundColor(.white)
                     )
+                    .accessibilityHidden(true)
 
-                TextField(text.profile_name_placeholder, text: $username)
-                    .font(.title3.bold())
+                TextField(text.profileNamePlaceholder, text: $username)
+                    .font(.title3.weight(.semibold))
                     .multilineTextAlignment(.center)
                     .textInputAutocapitalization(.words)
                     .disableAutocorrection(true)
+                    .submitLabel(.done)
 
-                Text(text.profile_local)
+                Text(text.profileLocal)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -87,27 +98,31 @@ struct AccountView: View {
             .padding(.vertical, 12)
         }
     }
+}
 
-    @ViewBuilder
-    private var languageSection: some View {
-        Section(text.language_section) {
-            Picker(text.language_picker, selection: $language) {
-                Text(text.language_de).tag("de")
-                Text(text.language_en).tag("en")
+private extension AccountView {
+
+    var languageSection: some View {
+        Section(text.languageSection) {
+            Picker(text.languagePicker, selection: $language) {
+                Text(text.languageDE).tag("de")
+                Text(text.languageEN).tag("en")
             }
             .pickerStyle(.segmented)
-            .onChange(of: language) {
+            .onChange(of: language) { _, _ in
                 subscription.reloadPlans()
             }
         }
     }
+}
 
-    @ViewBuilder
-    private var subscriptionSection: some View {
-        Section(text.subscription_section) {
+private extension AccountView {
+
+    var subscriptionSection: some View {
+        Section(text.subscriptionSection) {
 
             HStack {
-                Label(text.current_plan, systemImage: "crown")
+                Label(text.currentPlan, systemImage: "crown")
                 Spacer()
 
                 Text(subscription.tier.displayName)
@@ -129,21 +144,23 @@ struct AccountView: View {
                 Label(
                     subscription.tier == .free
                         ? text.upgrade
-                        : text.manage_subscription,
+                        : text.manageSubscription,
                     systemImage: "eurosign.circle"
                 )
             }
 
             if subscription.tier != .free {
-                Label(text.active_subscription, systemImage: "checkmark.seal.fill")
+                Label(text.activeSubscription, systemImage: "checkmark.seal.fill")
                     .foregroundColor(.green)
             }
         }
     }
+}
 
-    @ViewBuilder
-    private var appSection: some View {
-        Section(text.app_section) {
+private extension AccountView {
+
+    var appSection: some View {
+        Section(text.appSection) {
             NavigationLink {
                 AppearanceView()
             } label: {
@@ -152,12 +169,11 @@ struct AccountView: View {
         }
     }
 
-    @ViewBuilder
-    private var aboutSection: some View {
-        Section(text.about_section) {
+    var aboutSection: some View {
+        Section(text.aboutSection) {
             Label("Khione", systemImage: "sparkles")
             Label(text.version, systemImage: "number")
-            Label(text.built_with, systemImage: "applelogo")
+            Label(text.builtWith, systemImage: "applelogo")
 
             Link(destination: tosURL) {
                 Label(text.tos, systemImage: "doc.text")

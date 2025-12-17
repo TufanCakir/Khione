@@ -37,7 +37,9 @@ struct KhioneView: View {
         guard !viewModel.isProcessing,
               let mode = viewModel.selectedMode else { return false }
 
-        if mode.id == "image" { return true }
+        if mode.id == "image" {
+            return true
+        }
 
         return !inputText
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -46,27 +48,22 @@ struct KhioneView: View {
 
     // MARK: - Body
     var body: some View {
-        NavigationStack {
-            ZStack {
-                themeManager.backgroundColor
-                    .ignoresSafeArea()
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        dismissInput()
-                    }
-
-                VStack(spacing: 0) {
-                    messagesList
-                    attachmentPreview
-                    statusHintBar
-                    footerBar
+        ZStack {
+            themeManager.backgroundColor
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    dismissInput()
                 }
+
+            VStack(spacing: 0) {
+                messagesList
+                attachmentPreview
+                statusHintBar
+                footerBar
             }
-            .simultaneousGesture(
-                TapGesture().onEnded { }
-            )
-            .toolbar { toolbarContent }
         }
+        .toolbar { toolbarContent }
         .imagePlaygroundSheet(
             isPresented: $showImagePlayground
         ) { url in
@@ -86,7 +83,9 @@ struct KhioneView: View {
         .onAppear {
             // Set a default mode if none is selected
             if viewModel.selectedMode == nil {
-                viewModel.setMode(KhioneModeRegistry.all.first!)
+                if let first = KhioneModeRegistry.all.first {
+                    viewModel.setMode(first)
+                }
             }
 
             // Apply start mode from UserDefaults once, if present
@@ -95,13 +94,15 @@ struct KhioneView: View {
                 UserDefaults.standard.removeObject(forKey: "khione_start_mode")
             }
         }
-
         .onDisappear {
             dismissInput(animated: false)
         }
+        .sheet(isPresented: $showUpgradeSheet) {
+            SubscriptionView()
+        }
     }
 
-    
+
     // MARK: - Toolbar
     private var toolbarContent: some ToolbarContent {
         Group {
@@ -115,7 +116,7 @@ struct KhioneView: View {
                         }
                     }
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(alignment: .bottom, spacing: 10) {
                         Text(viewModel.selectedMode?.name ?? "Khione")
                             .font(.headline)
                         Image(systemName: "chevron.down")
@@ -184,8 +185,8 @@ struct KhioneView: View {
 
     // MARK: - Chat Footer
     private var chatFooter: some View {
-        HStack(spacing: 10) {
-            
+        HStack(alignment: .bottom, spacing: 10) {
+
             attachmentButton
             speechButton
             
@@ -245,8 +246,10 @@ struct KhioneView: View {
             }
             .buttonStyle(.borderedProminent)
         }
-        .padding()
         .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .padding(.horizontal)
+        .padding(.bottom, 6)
     }
 
     // MARK: - Buttons
@@ -288,7 +291,6 @@ struct KhioneView: View {
     private var speechButton: some View {
         Button {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-
             if speech.isRecording {
                 speech.stop()
             } else {
@@ -311,6 +313,11 @@ struct KhioneView: View {
             lineWidth: 2,
             radius: 14
         )
+        .onChange(of: viewModel.selectedMode?.id) { _, _ in
+            if speech.isRecording {
+                speech.stop()
+            }
+        }
     }
 
     // MARK: - Attachment Preview
@@ -399,7 +406,7 @@ struct KhioneView: View {
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         if let last = viewModel.messages.last {
-            withAnimation {
+            withAnimation(.easeOut(duration: 0.2)) {
                 proxy.scrollTo(last.id, anchor: .bottom)
             }
         }
@@ -449,12 +456,10 @@ extension UIApplication {
 }
 
 #Preview {
-    let storeKit = StoreKitManager()
-    let subscription = SubscriptionManager(storeKit: storeKit)
-
-    KhioneView()
-        .environmentObject(storeKit)
-        .environmentObject(subscription)
-        .environmentObject(ThemeManager())
+    NavigationStack {
+        KhioneView()
+            .environmentObject(StoreKitManager())
+            .environmentObject(SubscriptionManager(storeKit: StoreKitManager()))
+            .environmentObject(ThemeManager())
+    }
 }
-

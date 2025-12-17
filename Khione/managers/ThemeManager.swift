@@ -3,18 +3,25 @@
 //  Khione
 //
 
-import Foundation
 import SwiftUI
 internal import Combine
 
 @MainActor
 final class ThemeManager: ObservableObject {
 
-    // MARK: - Data
-    @Published private(set) var themes: [AppTheme] = Bundle.main.loadThemes()
+    // MARK: - Stored Data
+    @Published private(set) var themes: [AppTheme]
 
     @AppStorage("selectedThemeID")
     private var selectedThemeID: String = "system"
+
+    // MARK: - Init
+    init() {
+        let loadedThemes = Bundle.main.loadThemes()
+        self.themes = loadedThemes.isEmpty
+            ? [ThemeManager.fallbackTheme]
+            : loadedThemes
+    }
 
     // MARK: - Selected Theme
     var selectedTheme: AppTheme {
@@ -23,11 +30,14 @@ final class ThemeManager: ObservableObject {
         ?? themes.first!
     }
 
+    // MARK: - Background Color
     var backgroundColor: Color {
-        let bg = selectedTheme.backgroundColor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-        // System oder leer → System Background
-        guard !bg.isEmpty, selectedTheme.id != "system" else {
+        guard
+            let bg = selectedTheme.backgroundColor?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+            !bg.isEmpty,
+            selectedTheme.id != "system"
+        else {
             return Color(.systemBackground)
         }
 
@@ -48,10 +58,13 @@ final class ThemeManager: ObservableObject {
 
     // MARK: - Accent Color
     var accentColor: Color {
-        let hex = selectedTheme.accentColor.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hex = selectedTheme.accentColor
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // System theme or empty color → use system accent
-        guard !hex.isEmpty, selectedTheme.id != "system" else {
+        guard
+            !hex.isEmpty,
+            selectedTheme.id != "system"
+        else {
             return .accentColor
         }
 
@@ -60,6 +73,19 @@ final class ThemeManager: ObservableObject {
 
     // MARK: - Public API
     func selectTheme(_ theme: AppTheme) {
+        guard theme.id != selectedThemeID else { return }
         selectedThemeID = theme.id
     }
+}
+
+private extension ThemeManager {
+
+    static let fallbackTheme = AppTheme(
+        id: "system",
+        name: "System",
+        icon: "circle.lefthalf.filled",
+        accentColor: "",
+        preferredScheme: "system",
+        backgroundColor: nil
+    )
 }

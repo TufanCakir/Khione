@@ -2,8 +2,6 @@
 //  RootView.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
-//
 
 import SwiftUI
 
@@ -13,12 +11,18 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            if internet.isConnected {
-                KhioneView()
-            } else {
-                NoInternetView()
-            }
+            content
         }
-        .animation(.easeInOut, value: internet.isConnected)
+        .animation(.easeInOut(duration: 0.25), value: internet.isConnected)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if internet.isConnected {
+            KhioneView()
+        } else {
+            NoInternetView()
+                .transition(.opacity)
+        }
     }
 }
