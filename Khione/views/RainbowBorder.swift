@@ -17,8 +17,12 @@ struct RainbowBorder: ViewModifier {
                     .stroke(
                         AngularGradient(
                             colors: [
-                                .blue,
                                 .cyan,
+                                .blue,
+                                .purple,
+                                .pink,
+                                .orange,
+                                .cyan
                             ],
                             center: .center,
                             angle: .degrees(angle)

@@ -139,7 +139,7 @@ final class SpeechRecognizer: ObservableObject {
         request?.endAudio()
         request = nil
 
-        task?.cancel()
+        task?.finish()
         task = nil
 
         try? AVAudioSession.sharedInstance().setActive(false)

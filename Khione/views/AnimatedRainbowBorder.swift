@@ -20,9 +20,13 @@ struct AnimatedRainbowBorder: ViewModifier {
                     .stroke(
                         AngularGradient(
                             colors: [
-                                .blue, .blue
-                               
-                            ],
+                                                      .cyan,
+                                                      .blue,
+                                                      .purple,
+                                                      .pink,
+                                                      .orange,
+                                                      .cyan
+                                                  ],
                             center: .center,
                             angle: .degrees(angle)
                         ),

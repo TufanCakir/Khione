@@ -25,7 +25,6 @@ struct KhioneView: View {
     @State private var showImagePlayground = false
     @State private var imagePromptCache: String = ""
     @StateObject private var speech = SpeechRecognizer()
-    @State private var isListening = false
 
     // MARK: - Body
     var body: some View {
@@ -87,7 +86,7 @@ struct KhioneView: View {
             }
         }
         .onChange(of: speech.transcript) { _, newValue in
-            if isListening {
+            if speech.isRecording {
                 inputText = newValue
             }
         }
@@ -175,13 +174,14 @@ struct KhioneView: View {
 
             attachmentButton
 
-            speechButton
-                .disabled(viewModel.isProcessing)
-                .animatedRainbowBorder(
-                    active: isListening,
-                    lineWidth: 2,
-                    radius: 14
-                )
+            ZStack {
+                speechButton
+            }
+            .animatedRainbowBorder(
+                active: speech.isRecording,
+                lineWidth: 2,
+                radius: 14
+            )
 
             TextField(
                 "Message Khione…",
@@ -211,30 +211,27 @@ struct KhioneView: View {
         Button {
             UIImpactFeedbackGenerator(style: .soft).impactOccurred()
 
-            if isListening {
-                // 🛑 Stop listening
+            if speech.isRecording {
                 speech.stop()
             } else {
-                // 🎙 Start listening
                 Task {
                     let allowed = await speech.requestPermission()
                     guard allowed else { return }
-
-                    do {
-                        try speech.start()
-                        isListening = true
-                    } catch {
-                        print("Speech start failed:", error)
-                    }
+                    try? speech.start()
                 }
             }
         } label: {
-            Image(systemName: isListening ? "stop.fill" : "mic.fill")
+            Image(systemName: speech.isRecording ? "stop.fill" : "mic.fill")
                 .font(.title3)
-                .foregroundStyle(isListening ? .red : .primary)
+                .foregroundStyle(speech.isRecording ? .red : .primary)
+                .padding(8)  // 🔑 WICHTIG
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
         }
-        .accessibilityLabel(
-            isListening ? "Sprachaufnahme stoppen" : "Sprachaufnahme starten"
+        .animatedRainbowBorder(
+            active: speech.isRecording,
+            lineWidth: 2,
+            radius: 14
         )
     }
 
@@ -247,6 +244,8 @@ struct KhioneView: View {
             speechButton
                 .disabled(viewModel.isProcessing)
 
+          
+            
             TextField(
                 isImageMode
                     ? "Bild über Image Playground erstellen"
@@ -380,9 +379,19 @@ struct KhioneView: View {
 
     // MARK: - Logic
     private var canSend: Bool {
-        !viewModel.isProcessing && viewModel.selectedMode != nil
-            && !inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-                .isEmpty
+        guard !viewModel.isProcessing,
+              let mode = viewModel.selectedMode
+        else { return false }
+
+        // 🖼 Image Mode → immer erlaubt
+        if mode.id == "image" {
+            return true
+        }
+
+        // 💬 Chat Mode → Text erforderlich
+        return !inputText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
     }
 
     private func handleSend() {
