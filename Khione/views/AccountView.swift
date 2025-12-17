@@ -9,64 +9,70 @@ import SwiftUI
 
 struct AccountView: View {
 
+    // MARK: - Environment
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var subscription: SubscriptionManager
-    @AppStorage("khione_username") private var username: String = ""
+
+    // MARK: - Storage
+    @AppStorage("khione_username") private var username = ""
+    @AppStorage("khione_language")
+    private var language: String =
+        Locale.current.language.languageCode?.identifier ?? "en"
+
+    // MARK: - Links
     private let tosURL = URL(string: "https://khione-tos.netlify.app/")!
     private let privacyURL = URL(string: "https://khione-privacy.netlify.app/")!
-    @AppStorage("khione_language") private var language: String =
-        Locale.current.language.languageCode?.identifier ?? "en"
+
+    // MARK: - Localization
     private var text: AccountLocalization {
         Bundle.main.loadAccountLocalization(language: language)
     }
 
+    // MARK: - Helpers
     private var initials: String {
-        let parts = username.split(separator: " ")
-        let letters = parts.prefix(2).compactMap { $0.first }
-        return letters.map { String($0).uppercased() }.joined()
+        let parts = username
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ")
+
+        let letters = parts.prefix(2).compactMap(\.first)
+        return letters.isEmpty
+            ? "?"
+            : letters.map { String($0).uppercased() }.joined()
     }
 
+    // MARK: - Body
     var body: some View {
-        NavigationStack {
-            ZStack {
-                themeManager.backgroundColor
-                    .ignoresSafeArea()
+        ZStack {
+            themeManager.backgroundColor.ignoresSafeArea()
 
-                List {
-                    profileSection
-                    subscriptionSection
-                    languageSection
-                    appSection
-                    aboutSection
-                }
-                .scrollContentBackground(.hidden)
+            List {
+                profileSection
+                subscriptionSection
+                languageSection
+                appSection
+                aboutSection
             }
-            .navigationTitle(text.title)
-            .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
         }
+        .navigationTitle(text.title)
+        .navigationBarTitleDisplayMode(.inline)
         .environment(\.locale, Locale(identifier: language))
     }
-}
 
-// MARK: - Sections
-extension AccountView {
-
-    // 👤 PROFIL
-    fileprivate var profileSection: some View {
+    @ViewBuilder
+    private var profileSection: some View {
         Section {
             VStack(spacing: 12) {
 
-                // Avatar
                 Circle()
                     .fill(Color.accentColor)
                     .frame(width: 72, height: 72)
                     .overlay(
-                        Text(initials.isEmpty ? "?" : initials)
+                        Text(initials)
                             .font(.title.bold())
                             .foregroundColor(.white)
                     )
 
-                // Name Input
                 TextField(text.profile_name_placeholder, text: $username)
                     .font(.title3.bold())
                     .multilineTextAlignment(.center)
@@ -82,8 +88,8 @@ extension AccountView {
         }
     }
 
-    // 🌍 SPRACHE
-    fileprivate var languageSection: some View {
+    @ViewBuilder
+    private var languageSection: some View {
         Section(text.language_section) {
             Picker(text.language_picker, selection: $language) {
                 Text(text.language_de).tag("de")
@@ -96,8 +102,8 @@ extension AccountView {
         }
     }
 
-    // 💳 ABO
-    fileprivate var subscriptionSection: some View {
+    @ViewBuilder
+    private var subscriptionSection: some View {
         Section(text.subscription_section) {
 
             HStack {
@@ -105,15 +111,15 @@ extension AccountView {
                 Spacer()
 
                 Text(subscription.tier.displayName)
+                    .font(.caption.bold())
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(
-                        Capsule()
-                            .fill(
-                                subscription.tier == .free
-                                    ? Color.secondary.opacity(0.15)
-                                    : Color.accentColor.opacity(0.15)
-                            )
+                        Capsule().fill(
+                            subscription.tier == .free
+                            ? Color.secondary.opacity(0.15)
+                            : Color.accentColor.opacity(0.15)
+                        )
                     )
             }
 
@@ -129,19 +135,14 @@ extension AccountView {
             }
 
             if subscription.tier != .free {
-                HStack {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundColor(.green)
-
-                    Text(text.active_subscription)
-                        .foregroundColor(.green)
-                }
+                Label(text.active_subscription, systemImage: "checkmark.seal.fill")
+                    .foregroundColor(.green)
             }
         }
     }
 
-    // ⚙️ APP
-    fileprivate var appSection: some View {
+    @ViewBuilder
+    private var appSection: some View {
         Section(text.app_section) {
             NavigationLink {
                 AppearanceView()
@@ -151,8 +152,8 @@ extension AccountView {
         }
     }
 
-    // ℹ️ ÜBER
-    fileprivate var aboutSection: some View {
+    @ViewBuilder
+    private var aboutSection: some View {
         Section(text.about_section) {
             Label("Khione", systemImage: "sparkles")
             Label(text.version, systemImage: "number")
@@ -169,18 +170,15 @@ extension AccountView {
     }
 }
 
-// MARK: - Preview
+
 #Preview {
     let storeKit = StoreKitManager()
     let subscription = SubscriptionManager(storeKit: storeKit)
 
-    AccountView()
-        .environmentObject(themeManagerPreview)
-        .environmentObject(subscription)
+    NavigationStack {
+        AccountView()
+            .environmentObject(ThemeManager())
+            .environmentObject(subscription)
+    }
 }
 
-// MARK: - Preview Helper
-private let themeManagerPreview: ThemeManager = {
-    let tm = ThemeManager()
-    return tm
-}()

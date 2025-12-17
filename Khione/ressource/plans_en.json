@@ -1,7 +1,7 @@
 [
   {
     "id": "free",
-    "name": "Free",
+    "name": "Kostenlos",
     "dailyMessageLimit": 20,
     "allowedModes": [
       "chat",
@@ -13,10 +13,10 @@
       "accessibility"
     ],
     "features": [
-      "Chat & creative modes",
-      "Tutor and writing mode",
+      "Everyday conversations & creative writing",
+      "Learning, writing & clear answers",
       "Accessibility & voice input",
-      "Clear decisions & factual answers"
+      "Perfect for exploring Khione"
     ]
   },
   {
@@ -38,10 +38,10 @@
       "refactor"
     ],
     "features": [
-      "All Free modes",
-      "Technical & programming mode",
-      "Analysis, debug & refactor",
-      "Productive workflows"
+      "Advanced analysis & reasoning capabilities",
+      "Programming, debugging & refactoring",
+      "Technical and productive workflows",
+      "For ambitious users & developers"
     ]
   },
   {
@@ -66,9 +66,9 @@
       "image"
     ],
     "features": [
-      "All Pro modes",
-      "Architecture & security mode",
-      "Image mode & image attachments",
+      "Visual reasoning & image generation",
+      "Architecture, security & system modes",
+      "Analyze & create images",
       "Apple Intelligence Image Playground"
     ]
   },
@@ -78,10 +78,10 @@
     "dailyMessageLimit": 20000,
     "allowedModes": "all",
     "features": [
-      "Everything unlocked",
-      "All modes including Vision",
-      "Apple Intelligence Image Playground",
-      "Maximum usage"
+      "Unlimited access to all features",
+      "Maximum performance with no limits",
+      "All current & future modes",
+      "The complete Khione experience"
     ]
   }
 ]

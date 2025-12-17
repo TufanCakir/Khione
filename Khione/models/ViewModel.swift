@@ -1,93 +1,86 @@
 import Foundation
 import FoundationModels
-internal import Combine
 import UIKit
+internal import Combine
 
 @MainActor
 final class ViewModel: ObservableObject {
-    
+
     // MARK: - UI State
-    @Published var messages: [ChatMessage] = []
-    @Published var isProcessing = false
+    @Published private(set) var messages: [ChatMessage] = []
+    @Published private(set) var isProcessing = false
     @Published var errorMessage: String?
-    
-    @Published var modes: [KhioneMode] = Bundle.main.loadKhioneModes()
-    @Published var selectedMode: KhioneMode?
-    
+
+    @Published private(set) var modes: [KhioneMode] = Bundle.main.loadKhioneModes()
+    @Published private(set) var selectedMode: KhioneMode?
+
     // MARK: - Model
     private let model = SystemLanguageModel.default
     private var session: LanguageModelSession?
     private var currentTask: Task<Void, Never>?
-    private var userMessageCountToday: Int {
-        messages.filter { $0.role == .user }.count
-    }
 
+    // MARK: - Init
     init() {
         selectedMode = modes.first
     }
-    
-    // MARK: - Public API
-    func send(text: String, image: UIImage?) {
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || image != nil else {
+
+    // MARK: - Mode Handling
+    func setMode(_ mode: KhioneMode) {
+        selectedMode = mode
+        session = nil // reset context
+    }
+
+    func setModeByID(_ id: String) {
+        guard let mode = KhioneModeRegistry.all.first(where: { $0.id == id }) else {
             return
         }
+        setMode(mode)
+    }
 
-        currentTask?.cancel()
+    // MARK: - Public API
+    func send(text: String, image: UIImage?) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty || image != nil else { return }
+
+        cancel()
 
         messages.append(
             ChatMessage(
                 role: .user,
-                text: text.isEmpty ? nil : text,
+                text: trimmed.isEmpty ? nil : trimmed,
                 image: image
             )
         )
 
-        currentTask = Task {
-            await generate(
-                text: text,
-                hasImage: image != nil
-            )
+        isProcessing = true
+        errorMessage = nil
+
+        currentTask = Task { [weak self] in
+            await self?.generate(text: trimmed, hasImage: image != nil)
         }
     }
 
-
- 
-
-
-    
     func cancel() {
         currentTask?.cancel()
         currentTask = nil
         isProcessing = false
     }
-    
-    func setMode(_ mode: KhioneMode) {
-        selectedMode = mode
-        session = nil
-    }
-    
+
     // MARK: - Core Logic
     private func generate(text: String, hasImage: Bool) async {
         guard model.isAvailable else {
             errorMessage = "Language model is not available on this device."
+            isProcessing = false
             return
         }
 
-        isProcessing = true
-        defer { isProcessing = false }
-
-        errorMessage = nil
-
-        let finalPrompt = buildPrompt(
-            text: text.trimmingCharacters(in: .whitespacesAndNewlines),
-            hasImage: hasImage
-        )
+        let prompt = buildPrompt(text: text, hasImage: hasImage)
 
         do {
             let session = session ?? LanguageModelSession()
             self.session = session
 
-            let response = try await session.respond(to: finalPrompt)
+            let response = try await session.respond(to: prompt)
             guard !Task.isCancelled else { return }
 
             messages.append(
@@ -102,14 +95,15 @@ final class ViewModel: ObservableObject {
         } catch {
             errorMessage = error.localizedDescription
         }
+
+        isProcessing = false
     }
 
-
-    
     // MARK: - Prompt Builder
     private func buildPrompt(text: String, hasImage: Bool) -> String {
         var prompt = """
-        System: \(currentSystemPrompt())
+        System:
+        \(currentSystemPrompt())
         """
 
         if hasImage {
@@ -123,14 +117,12 @@ final class ViewModel: ObservableObject {
 
         prompt += """
 
-        User: \(text.isEmpty ? "Hello!" : text)
+        User:
+        \(text.isEmpty ? "Hello!" : text)
         """
 
         return prompt
     }
-
-
-
 
     private func currentSystemPrompt() -> String {
         let base = """

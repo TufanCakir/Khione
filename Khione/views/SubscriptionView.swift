@@ -14,6 +14,9 @@ struct SubscriptionView: View {
     @EnvironmentObject private var storeKit: StoreKitManager
     @Environment(\.dismiss) private var dismiss
 
+    @State private var isPurchasing = false
+    @State private var errorMessage: String?
+
     private let text = Bundle.main.loadSubscriptionLocalization()
 
     var body: some View {
@@ -21,17 +24,21 @@ struct SubscriptionView: View {
             VStack(spacing: 24) {
 
                 header
-
                 plansCarousel
-
                 restoreButton
+
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .foregroundColor(.red)
+                }
             }
             .padding(.vertical)
         }
+        .disabled(isPurchasing)
     }
 }
 
-// MARK: - Header
 private extension SubscriptionView {
 
     var header: some View {
@@ -46,9 +53,8 @@ private extension SubscriptionView {
     }
 }
 
-// MARK: - Plans
 private extension SubscriptionView {
-
+    
     var plansCarousel: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
@@ -60,32 +66,33 @@ private extension SubscriptionView {
             .padding(.horizontal)
         }
     }
-
+    
     @ViewBuilder
     func subscriptionCard(_ plan: SubscriptionPlan) -> some View {
         let tier = SubscriptionTier(rawValue: plan.id)
         let isActive = tier == subscription.tier
-
+        
         VStack(spacing: 14) {
-
-            // Title
+            
             Text(plan.name)
                 .font(.title2.bold())
-
-            // Price
-            Text(priceText(for: tier))
-                .foregroundColor(.secondary)
-
-            // Features
+            
+            Text(
+                priceText(
+                    for: tier,
+                    subscription: subscription
+                )
+            )
+            .foregroundColor(.secondary)
+            
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(plan.features, id: \.self) {
-                    Text("• \($0)")
+                ForEach(plan.features, id: \.self) { feature in
+                    Text("• \(feature)")
                         .font(.footnote)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Action
+            
             if isActive {
                 Label(text.active, systemImage: "checkmark.seal.fill")
                     .foregroundColor(.green)
@@ -104,7 +111,7 @@ private extension SubscriptionView {
     }
 }
 
-// MARK: - Buttons
+
 private extension SubscriptionView {
 
     func subscribeButton(for tier: SubscriptionTier?) -> some View {
@@ -114,7 +121,10 @@ private extension SubscriptionView {
             }
         }
         .buttonStyle(.borderedProminent)
-        .disabled(tier?.productID == nil)
+        .disabled(
+            isPurchasing ||
+            tier?.productID == nil
+        )
     }
 
     var restoreButton: some View {
@@ -129,13 +139,17 @@ private extension SubscriptionView {
     }
 }
 
-// MARK: - Helpers
 private extension SubscriptionView {
 
-    func priceText(for tier: SubscriptionTier?) -> String {
-        guard let tier else { return "—" }
-        return subscription.price(for: tier)
-    }
+
+        func priceText(
+            for tier: SubscriptionTier?,
+            subscription: SubscriptionManager
+        ) -> String {
+            guard let tier else { return "—" }
+            return subscription.price(for: tier)
+        }
+    
 
     func purchase(_ tier: SubscriptionTier?) async {
         guard
@@ -144,12 +158,16 @@ private extension SubscriptionView {
             let product = storeKit.product(for: productID)
         else { return }
 
+        isPurchasing = true
+        errorMessage = nil
+        defer { isPurchasing = false }
+
         do {
             try await storeKit.purchase(product)
             await subscription.syncWithStoreKit()
             dismiss()
         } catch {
-            print("❌ Purchase failed:", error)
+            errorMessage = error.localizedDescription
         }
     }
 }

@@ -5,81 +5,74 @@
 //  Created by Tufan Cakir on 14.12.25.
 //
 
-import ImagePlayground
-import StoreKit
 import SwiftUI
+import StoreKit
+import ImagePlayground
 
 struct KhioneView: View {
-    
+
     // MARK: - State & Environment
     @StateObject private var viewModel = ViewModel()
+    @StateObject private var speech = SpeechRecognizer()
+
     @EnvironmentObject private var subscription: SubscriptionManager
     @EnvironmentObject private var themeManager: ThemeManager
-    
+
+    @State private var inputText = ""
+    @State private var selectedImage: UIImage?
+
     @State private var showUpgradeSheet = false
     @State private var showImagePicker = false
-    @State private var selectedImage: UIImage?
-    @State private var inputText = ""
-    
-    @FocusState private var isInputFocused: Bool
     @State private var showImagePlayground = false
-    @State private var imagePromptCache: String = ""
-    @StateObject private var speech = SpeechRecognizer()
-    
+
+    @FocusState private var isInputFocused: Bool
+
+
+    // MARK: - Computed
+    private var isImageMode: Bool {
+        viewModel.selectedMode?.id == "image"
+    }
+
+    private var canSend: Bool {
+        guard !viewModel.isProcessing,
+              let mode = viewModel.selectedMode else { return false }
+
+        if mode.id == "image" { return true }
+
+        return !inputText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
+    }
+
     // MARK: - Body
     var body: some View {
         NavigationStack {
             ZStack {
-                themeBackground
-                
-                // Main content
+                themeManager.backgroundColor
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        dismissInput()
+                    }
+
                 VStack(spacing: 0) {
-                    // Place your chat view content here
-                    chatView
+                    messagesList
+                    attachmentPreview
+                    statusHintBar
+                    footerBar
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Menu {
-                        ForEach(subscription.allowedModes()) { mode in
-                            Button {
-                                viewModel.setMode(mode)
-                            } label: {
-                                Label(mode.name, systemImage: mode.icon)
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text(viewModel.selectedMode?.name ?? "Khione")
-                                .font(.headline)
-                                .accessibilityLabel("Modus auswählen")
-                                .accessibilityHint(
-                                    "Tippe, um den Chat-Modus zu wechseln"
-                                )
-                            
-                            if viewModel.modes.count > 1 {
-                                Image(systemName: "chevron.down")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        AccountView()
-                    } label: {
-                        Image(systemName: "person.crop.circle")
-                    }
-                }
-            }
+            .simultaneousGesture(
+                TapGesture().onEnded { }
+            )
+            .toolbar { toolbarContent }
         }
         .imagePlaygroundSheet(
-            isPresented: $showImagePlayground,
-            onCompletion: { _ in
-                // Optional: Result speichern / ignorieren
-            }
-        )
+            isPresented: $showImagePlayground
+        ) { url in
+            print("Image Playground result:", url)
+            // z.B. speichern, analysieren, anzeigen
+        }
         .sheet(isPresented: $showImagePicker) {
             if subscription.canUseVision {
                 ImagePicker(image: $selectedImage)
@@ -90,31 +83,58 @@ struct KhioneView: View {
                 inputText = newValue
             }
         }
-        
         .onAppear {
+            // Set a default mode if none is selected
             if viewModel.selectedMode == nil {
                 viewModel.setMode(KhioneModeRegistry.all.first!)
             }
+
+            // Apply start mode from UserDefaults once, if present
+            if let modeID = UserDefaults.standard.string(forKey: "khione_start_mode") {
+                viewModel.setModeByID(modeID)
+                UserDefaults.standard.removeObject(forKey: "khione_start_mode")
+            }
+        }
+
+        .onDisappear {
+            dismissInput(animated: false)
         }
     }
+
     
-    // MARK: - Background
-    private var themeBackground: some View {
-        themeManager.backgroundColor.ignoresSafeArea()
-    }
-    
-    // MARK: - Chat View
-    private var chatView: some View {
-        VStack(spacing: 0) {
-            
-            messagesList
-            
-            attachmentPreview
-            statusHintBar
-            footerBar
+    // MARK: - Toolbar
+    private var toolbarContent: some ToolbarContent {
+        Group {
+            ToolbarItem(placement: .principal) {
+                Menu {
+                    ForEach(subscription.allowedModes()) { mode in
+                        Button {
+                            viewModel.setMode(mode)
+                        } label: {
+                            Label(mode.name, systemImage: mode.icon)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(viewModel.selectedMode?.name ?? "Khione")
+                            .font(.headline)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    AccountView()
+                } label: {
+                    Image(systemName: "person.crop.circle")
+                }
+            }
         }
     }
-    
+
     // MARK: - Messages
     private var messagesList: some View {
         ScrollViewReader { proxy in
@@ -124,7 +144,7 @@ struct KhioneView: View {
                         ChatBubbleView(message: message)
                             .id(message.id)
                     }
-                    
+
                     if viewModel.isProcessing {
                         ProgressView("Khione is thinking…")
                             .padding(.top)
@@ -140,125 +160,38 @@ struct KhioneView: View {
                 scrollToBottom(proxy)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
     }
-    
-    private func autoSendIfPossible() {
-        guard canSend else { return }
-        handleSend()
-    }
-    
-    private var isImageMode: Bool {
-        viewModel.selectedMode?.id == "image"
-    }
-    
-    
-    
-    
-    private var speechButton: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-            
-            if speech.isRecording {
-                speech.stop()
-            } else {
-                Task {
-                    let allowed = await speech.requestPermission()
-                    guard allowed else { return }
-                    try? speech.start()
-                }
-            }
-        } label: {
-            Image(systemName: speech.isRecording ? "stop.fill" : "mic.fill")
-                .font(.title3)
-                .foregroundStyle(speech.isRecording ? .red : .primary)
-                .padding(8)  // 🔑 WICHTIG
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-        }
-        .animatedRainbowBorder(
-            active: speech.isRecording,
-            lineWidth: 2,
-            radius: 14
-        )
-    }
-    
+
+    // MARK: - Footer Switch
+    @ViewBuilder
     private var footerBar: some View {
-        Group {
-            if isImageMode {
-                imageFooter
-            } else {
-                chatFooter
-            }
+        if isImageMode {
+            imageFooter
+        } else {
+            chatFooter
         }
     }
-    
-    
-    private var imageFooter: some View {
-        VStack(spacing: 16) {
-            
-            // Info-Bereich
-            VStack(spacing: 12) {
-                Image(systemName: "photo.artframe")
-                    .font(.system(size: 44))
-                    .foregroundStyle(.secondary)
-                
-                Text("Bilder werden über Apple Image Playground erstellt")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.top, 24)
-            
-            // Action Button
-            Button {
-                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                isInputFocused = false
-                showImagePlayground = true
-            } label: {
-                Label("Image Playground öffnen", systemImage: "photo.artframe")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.blue)
+
+    @ViewBuilder
+    private var actionButton: some View {
+        if viewModel.isProcessing {
+            stopButton
+        } else {
+            sendButton
         }
-        .padding()
-        .background(.ultraThinMaterial)
     }
-    
-    
-    
-    // MARK: - Footer
+
+    // MARK: - Chat Footer
     private var chatFooter: some View {
         HStack(spacing: 10) {
             
             attachmentButton
-            
-            ZStack {
-                speechButton
-            }
-            .animatedRainbowBorder(
-                active: speech.isRecording,
-                lineWidth: 2,
-                radius: 14
-            )
-            
-            if isImageMode {
-                VStack(spacing: 12) {
-                    Image(systemName: "photo.artframe")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("Bilder werden über Apple Image Playground erstellt")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.top, 40)
-            }
+            speechButton
             
             TextField(
                 "Message Khione…",
                 text: $inputText,
-                prompt: Text("Message Khione…"),
                 axis: .vertical
             )
             .focused($isInputFocused)
@@ -266,25 +199,62 @@ struct KhioneView: View {
             .padding(10)
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 14))
-            .animation(.easeOut(duration: 0.2), value: isInputFocused)
-            
-            if viewModel.isProcessing {
-                stopButton
-            } else {
-                sendButton
-            }
+            actionButton
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(.ultraThinMaterial)
     }
-    
-    
+
+    private func dismissInput(animated: Bool = true) {
+        if animated {
+            withAnimation(.easeOut(duration: 0.2)) {
+                isInputFocused = false
+            }
+        } else {
+            isInputFocused = false
+        }
+
+        DispatchQueue.main.async {
+            UIApplication.shared.dismissKeyboard()
+        }
+    }
+
+
+    // MARK: - Image Footer
+    private var imageFooter: some View {
+        VStack(spacing: 16) {
+
+            VStack(spacing: 12) {
+                Image(systemName: "photo.artframe")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.secondary)
+
+                Text("Bilder werden über Apple Image Playground erstellt")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+
+            Button {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                dismissInput()
+                showImagePlayground = true
+            } label: {
+                Label("Image Playground öffnen", systemImage: "photo.artframe")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+    }
+
+    // MARK: - Buttons
     private var attachmentButton: some View {
         Button {
             subscription.canUseVision
-            ? (showImagePicker = true)
-            : (showUpgradeSheet = true)
+                ? (showImagePicker = true)
+                : (showUpgradeSheet = true)
         } label: {
             Image(systemName: "plus")
                 .font(.title3)
@@ -292,8 +262,7 @@ struct KhioneView: View {
         .disabled(!subscription.canUseVision)
         .opacity(subscription.canUseVision ? 1 : 0.35)
     }
-    
-    // MARK: - Buttons
+
     private var sendButton: some View {
         Button(action: handleSend) {
             Image(systemName: "paperplane.fill")
@@ -302,9 +271,8 @@ struct KhioneView: View {
         }
         .buttonStyle(.borderedProminent)
         .disabled(!canSend)
-        .opacity(canSend ? 1.0 : 0.4)
     }
-    
+
     private var stopButton: some View {
         Button {
             viewModel.cancel()
@@ -316,141 +284,128 @@ struct KhioneView: View {
         .buttonStyle(.bordered)
         .tint(.red)
     }
-    
-    // MARK: - Status Hint
-    private var statusHintBar: some View {
-        Group {
-            if subscription.tier == .free
-                && (isInputFocused || subscription.remainingMessagesToday == 0)
-            {
-                
-                HStack(spacing: 6) {
-                    
-                    if subscription.remainingMessagesToday > 0 {
-                        Text("\(subscription.remainingMessagesToday)")
-                            .font(.caption.bold())
-                        Text("Nachrichten verfügbar")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Image(systemName: "clock")
-                            .font(.caption2)
-                        RefillCountdownView(
-                            nextRefillDate: subscription.nextRefillDate
-                        )
+
+    private var speechButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+
+            if speech.isRecording {
+                speech.stop()
+            } else {
+                Task {
+                    if await speech.requestPermission() {
+                        try? speech.start()
                     }
-                    
-                    Spacer()
-                    
-                    Label("Vision", systemImage: "lock.fill")
-                        .font(.caption2)
+                }
+            }
+        } label: {
+            Image(systemName: speech.isRecording ? "stop.fill" : "mic.fill")
+                .font(.title3)
+                .foregroundStyle(speech.isRecording ? .red : .primary)
+                .padding(8)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .animatedRainbowBorder(
+            active: speech.isRecording,
+            lineWidth: 2,
+            radius: 14
+        )
+    }
+
+    // MARK: - Attachment Preview
+    @ViewBuilder
+    private var attachmentPreview: some View {
+        if subscription.canUseVision, let image = selectedImage {
+            HStack {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                Button {
+                    selectedImage = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 6)
-                .background(.ultraThinMaterial)
-                .transition(.opacity)
-                .animation(
-                    .easeInOut(duration: 0.2),
-                    value: subscription.remainingMessagesToday
-                )
+
+                Spacer()
             }
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+            .background(.ultraThinMaterial)
         }
     }
-    
-    // MARK: - Attachment Preview
-    private var attachmentPreview: some View {
-        Group {
-            if subscription.canUseVision, let image = selectedImage {
-                HStack {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 80, height: 80)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .clipped()
-                    
-                    Button {
-                        selectedImage = nil
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
+
+
+    // MARK: - Status Hint
+    @ViewBuilder
+    private var statusHintBar: some View {
+        if subscription.tier == .free &&
+            (isInputFocused || subscription.remainingMessagesToday == 0) {
+
+            HStack {
+                if subscription.remainingMessagesToday > 0 {
+                    Text("\(subscription.remainingMessagesToday)")
+                        .font(.caption.bold())
+                    Text("Nachrichten verfügbar")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    RefillCountdownView(
+                        nextRefillDate: subscription.nextRefillDate
+                    )
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 6)
-                .background(.ultraThinMaterial)
+
+                Spacer()
+
+                Label("Vision", systemImage: "lock.fill")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+            .background(.ultraThinMaterial)
         }
     }
-    
+
     // MARK: - Logic
-
-    private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        if let last = viewModel.messages.last {
-            withAnimation(.easeOut(duration: 0.2)) {
-                proxy.scrollTo(last.id, anchor: .bottom)
-            }
-        } else if viewModel.isProcessing {
-            withAnimation(.easeOut(duration: 0.2)) {
-                proxy.scrollTo("typing", anchor: .bottom)
-            }
-        }
-    }
-
-    private var canSend: Bool {
-        guard !viewModel.isProcessing,
-              let mode = viewModel.selectedMode else { return false }
-
-        // 🖼 Image Mode → immer erlaubt
-        if mode.id == "image" { return true }
-
-        // 💬 Chat Mode → Text erforderlich
-        return !inputText
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty
-    }
-
-
     private func handleSend() {
-
         guard let mode = viewModel.selectedMode else { return }
 
-        // 🖼 IMAGE MODE → Playground öffnen
-        if mode.id == "image" {
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-            isInputFocused = false
+        dismissInput()
 
-            imagePromptCache = inputText
-            inputText = ""
+        if mode.id == "image" {
             showImagePlayground = true
+            inputText = ""
             return
         }
 
-        // 🔒 Subscription Check
         guard subscription.canSendMessage else {
             showUpgradeSheet = true
             return
         }
 
-        // 📎 Vision Check
-        if selectedImage != nil && !subscription.canUseVision {
-            showUpgradeSheet = true
-            return
-        }
-
-        // ✅ Chat senden
-        isInputFocused = false
         viewModel.send(text: inputText, image: selectedImage)
         subscription.consumeMessageIfNeeded()
 
         inputText = ""
         selectedImage = nil
     }
+
+
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        if let last = viewModel.messages.last {
+            withAnimation {
+                proxy.scrollTo(last.id, anchor: .bottom)
+            }
+        }
+    }
 }
+
 
 struct RefillCountdownView: View {
     let nextRefillDate: Date
@@ -482,6 +437,17 @@ struct RefillCountdownView: View {
     }
 }
 
+extension UIApplication {
+    func dismissKeyboard() {
+        sendAction(
+            #selector(UIResponder.resignFirstResponder),
+            to: nil,
+            from: nil,
+            for: nil
+        )
+    }
+}
+
 #Preview {
     let storeKit = StoreKitManager()
     let subscription = SubscriptionManager(storeKit: storeKit)
@@ -491,3 +457,4 @@ struct RefillCountdownView: View {
         .environmentObject(subscription)
         .environmentObject(ThemeManager())
 }
+

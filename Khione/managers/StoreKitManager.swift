@@ -2,11 +2,9 @@
 //  StoreKitManager.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
-//
 
-internal import Combine
 import StoreKit
+internal import Combine
 
 @MainActor
 final class StoreKitManager: ObservableObject {
@@ -19,16 +17,21 @@ final class StoreKitManager: ObservableObject {
     private let productIDs: [String] = [
         "khione.pro.monthly",
         "khione.vision.monthly",
-        "khione.infinity.monthly",
+        "khione.infinity.monthly"
     ]
 
     // MARK: - Init
     init() {
         Task {
-            await loadProducts()
-            await observeTransactions()
-            await refreshEntitlements()
+            await start()
         }
+    }
+
+    // MARK: - Startup Flow (🔑 klar & deterministisch)
+    private func start() async {
+        await loadProducts()
+        await refreshEntitlements()
+        observeTransactions()
     }
 
     // MARK: - Load Products
@@ -47,19 +50,23 @@ final class StoreKitManager: ObservableObject {
         guard
             case .success(let verification) = result,
             case .verified(let transaction) = verification
-        else { return }
+        else {
+            return
+        }
 
         await transaction.finish()
         await refreshEntitlements()
     }
 
-    // MARK: - Observe Transactions (🔥 WICHTIG)
-    private func observeTransactions() async {
-        for await result in Transaction.updates {
-            guard case .verified(let transaction) = result else { continue }
+    // MARK: - Observe Transactions (läuft im Hintergrund)
+    private func observeTransactions() {
+        Task.detached(priority: .background) {
+            for await result in Transaction.updates {
+                guard case .verified(let transaction) = result else { continue }
 
-            await transaction.finish()
-            await refreshEntitlements()
+                await transaction.finish()
+                await self.refreshEntitlements()
+            }
         }
     }
 
@@ -71,12 +78,16 @@ final class StoreKitManager: ObservableObject {
             guard case .verified(let transaction) = result else { continue }
 
             switch transaction.productID {
-            case "khione.pro.monthly":
-                detectedTier = .pro
-            case "khione.vision.monthly":
-                detectedTier = .vision
             case "khione.infinity.monthly":
                 detectedTier = .infinity
+            case "khione.vision.monthly":
+                if detectedTier != .infinity {
+                    detectedTier = .vision
+                }
+            case "khione.pro.monthly":
+                if detectedTier == .free {
+                    detectedTier = .pro
+                }
             default:
                 break
             }

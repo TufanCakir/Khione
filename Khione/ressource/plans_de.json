@@ -13,10 +13,10 @@
       "accessibility"
     ],
     "features": [
-      "Chat & kreative Modi",
-      "Tutor- und Schreibmodus",
-      "Accessibility & Voice",
-      "Klare Entscheidungen & Fakten"
+      "Alltägliche Gespräche & kreative Texte",
+      "Lernen, Schreiben & klare Antworten",
+      "Barrierefreiheit & Spracheingabe",
+      "Ideal zum Ausprobieren von Khione"
     ]
   },
   {
@@ -38,10 +38,10 @@
       "refactor"
     ],
     "features": [
-      "Alle Free-Modi",
-      "Technischer & Programmiermodus",
-      "Analyse, Debug & Refactor",
-      "Produktives Arbeiten"
+      "Erweiterte Analyse- & Denkfähigkeiten",
+      "Programmieren, Debugging & Refactoring",
+      "Technische und produktive Workflows",
+      "Für ambitionierte Nutzer & Entwickler"
     ]
   },
   {
@@ -66,9 +66,9 @@
       "image"
     ],
     "features": [
-      "Alle Pro-Modi",
-      "Architektur- & Sicherheitsmodus",
-      "Bild-Modus & Bildanhänge",
+      "Visuelles Denken & Bildgenerierung",
+      "Architektur-, Sicherheits- & Systemmodi",
+      "Bilder analysieren & erstellen",
       "Apple Intelligence Image Playground"
     ]
   },
@@ -78,10 +78,10 @@
     "dailyMessageLimit": 20000,
     "allowedModes": "all",
     "features": [
-      "Alles freigeschaltet",
-      "Alle Modi inklusive Vision",
-      "Apple Intelligence Image Playground",
-      "Maximale Nutzung"
+      "Uneingeschränkter Zugriff auf alle Funktionen",
+      "Maximale Leistung ohne Limits",
+      "Alle aktuellen & zukünftigen Modi",
+      "Das vollständige Khione-Erlebnis"
     ]
   }
 ]

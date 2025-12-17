@@ -3,7 +3,6 @@
 //  Khione
 //
 
-import Foundation
 import SwiftUI
 import StoreKit
 internal import Combine
@@ -21,37 +20,37 @@ final class SubscriptionManager: ObservableObject {
     private let storeKit: StoreKitManager
     private let allModes = KhioneModeRegistry.all
 
-    // MARK: - Language (State only, NOT used in init)
-    @AppStorage("khione_language") private var language: String = "en"
+    // MARK: - Persistence
+    private let remainingKey = "remainingMessagesToday"
+    private let lastConsumeKey = "lastMessageConsumeDate"
+    private let initializedKey = "freeTierInitialized"
+
+    @AppStorage("khione_language")
+    private var language: String = "en"
 
     // MARK: - Init
     init(storeKit: StoreKitManager) {
         self.storeKit = storeKit
 
-        // ✅ SAFE: AppStorage NICHT verwenden
-        let initialLanguage =
-            UserDefaults.standard.string(forKey: "khione_language") ?? "en"
+        let lang = UserDefaults.standard.string(forKey: "khione_language") ?? "en"
+        let loadedPlans = Bundle.main.loadPlans(language: lang)
 
-        let loadedPlans = Bundle.main.loadPlans(language: initialLanguage)
         self.plans = loadedPlans
         self.plan = loadedPlans.first { $0.id == "free" }!
 
+        // 🔑 Restore persisted state
+        self.remainingMessagesToday = storedRemainingMessages
+
         Task { await syncWithStoreKit() }
     }
-
-    // MARK: - Reload when language changes
-    func reloadPlans() {
-        let loadedPlans = Bundle.main.loadPlans(language: language)
-        plans = loadedPlans
-
-        if let active = loadedPlans.first(where: { $0.id == tier.rawValue }) {
-            plan = active
-        } else if let free = loadedPlans.first(where: { $0.id == "free" }) {
-            plan = free
-        }
+    // MARK: - Pricing
+    func price(for tier: SubscriptionTier) -> String {
+        guard let productID = tier.productID else { return "—" }
+        return storeKit.product(for: productID)?.displayPrice ?? "—"
     }
 
-    // MARK: - StoreKit
+
+    // MARK: - StoreKit Sync
     func syncWithStoreKit() async {
         await storeKit.refreshEntitlements()
         applyTier(storeKit.activeTier)
@@ -64,32 +63,27 @@ final class SubscriptionManager: ObservableObject {
         refillMessagesIfNeeded()
     }
 
-    // MARK: - Allowed Modes
-    func allowedModes() -> [KhioneMode] {
-        switch plan.allowedModes {
-        case .all:
-            return allModes
-        case .list(let ids):
-            return allModes.filter { ids.contains($0.id) }
-        }
+    // MARK: - Plans
+    func reloadPlans() {
+        let loaded = Bundle.main.loadPlans(language: language)
+        plans = loaded
+        plan = loaded.first { $0.id == tier.rawValue }
+            ?? loaded.first { $0.id == "free" }!
     }
 
-    // MARK: - Vision
-    var canUseVision: Bool {
-        allowedModes().contains { $0.id == "image" }
-    }
-
-    // MARK: - Messaging
+    // MARK: - Messaging Logic
     var canSendMessage: Bool {
         tier != .free || remainingMessagesToday > 0
     }
 
     func consumeMessageIfNeeded() {
         guard tier == .free else { return }
+
         refillMessagesIfNeeded()
         guard remainingMessagesToday > 0 else { return }
 
         remainingMessagesToday -= 1
+        storedRemainingMessages = remainingMessagesToday
         lastConsumeDate = Date()
     }
 
@@ -97,28 +91,26 @@ final class SubscriptionManager: ObservableObject {
         plan.dailyMessageLimit
     }
 
-    // MARK: - Pricing
-    func price(for tier: SubscriptionTier) -> String {
-        guard let productID = tier.productID else { return "—" }
-        return storeKit.product(for: productID)?.displayPrice ?? "—"
-    }
-
     // MARK: - Refill System
     private let refillInterval: TimeInterval = 2 * 60 * 60
-    private let lastConsumeKey = "lastMessageConsumeDate"
-    private let initializedKey = "freeTierInitialized"
 
     private func initializeFreeIfNeeded() {
-        guard tier == .free, !isInitialized else { return }
-        remainingMessagesToday = dailyMessageLimit
-        lastConsumeDate = Date()
-        isInitialized = true
+        guard tier == .free else { return }
+
+        if !isInitialized {
+            remainingMessagesToday = dailyMessageLimit
+            storedRemainingMessages = remainingMessagesToday
+            lastConsumeDate = Date()
+            isInitialized = true
+        }
     }
 
     private func refillMessagesIfNeeded() {
         guard tier == .free else { return }
 
         let elapsed = Date().timeIntervalSince(lastConsumeDate)
+        guard elapsed >= refillInterval else { return }
+
         let refillCount = Int(elapsed / refillInterval)
         guard refillCount > 0 else { return }
 
@@ -127,6 +119,7 @@ final class SubscriptionManager: ObservableObject {
             dailyMessageLimit
         )
 
+        storedRemainingMessages = remainingMessagesToday
         lastConsumeDate = lastConsumeDate.addingTimeInterval(
             TimeInterval(refillCount) * refillInterval
         )
@@ -134,6 +127,12 @@ final class SubscriptionManager: ObservableObject {
 
     var nextRefillDate: Date {
         lastConsumeDate.addingTimeInterval(refillInterval)
+    }
+
+    // MARK: - Persistence Helpers
+    private var storedRemainingMessages: Int {
+        get { UserDefaults.standard.integer(forKey: remainingKey) }
+        set { UserDefaults.standard.set(newValue, forKey: remainingKey) }
     }
 
     private var lastConsumeDate: Date {
@@ -144,5 +143,19 @@ final class SubscriptionManager: ObservableObject {
     private var isInitialized: Bool {
         get { UserDefaults.standard.bool(forKey: initializedKey) }
         set { UserDefaults.standard.set(newValue, forKey: initializedKey) }
+    }
+
+    // MARK: - Vision
+    var canUseVision: Bool {
+        allowedModes().contains { $0.id == "image" }
+    }
+
+    func allowedModes() -> [KhioneMode] {
+        switch plan.allowedModes {
+        case .all:
+            return allModes
+        case .list(let ids):
+            return allModes.filter { ids.contains($0.id) }
+        }
     }
 }
