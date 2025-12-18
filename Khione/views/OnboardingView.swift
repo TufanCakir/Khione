@@ -21,7 +21,7 @@ struct OnboardingView: View {
                     icon: "snowflake",
                     title: "Khione",
                     text:
-                        "Your native AI assistant for clarity, creativity and productivity."
+                        "Your native AI assistant for clarity, creativity and productivity.",
                 )
                 .tag(0)
 
@@ -29,7 +29,7 @@ struct OnboardingView: View {
                     icon: "sparkles",
                     title: "Powerful & Private",
                     text:
-                        "Chat, Vision and Apple Intelligence — designed for speed and privacy."
+                        "Chat, Vision and Apple Intelligence — designed for speed and privacy.",
                 )
                 .tag(1)
 
@@ -37,7 +37,7 @@ struct OnboardingView: View {
                     icon: "checkmark.seal",
                     title: "Ready to Start",
                     text:
-                        "Start for free. Upgrade anytime to unlock advanced features."
+                        "Start for free. Upgrade anytime to unlock advanced features.",
                 )
                 .tag(2)
             }

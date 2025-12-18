@@ -1,21 +1,21 @@
 {
     "title": "Khione",
-    "subtitle": "Ein natives KI-Erlebnis für Apple Plattformen",
+    "subtitle": "Ein modernes KI-Erlebnis für Klarheit und Fokus",
     "sections": [
         {
             "title": "Was ist Khione?",
             "text":
-                "Khione ist ein hochwertiger KI-Assistent für Klarheit, Kreativität und Produktivität — tief in Apple-Technologien integriert."
+                "Khione ist ein hochwertiger KI-Assistent für Klarheit, Kreativität und Produktivität – entwickelt, um dich im Alltag und bei Ideen effektiv zu unterstützen."
         },
         {
-            "title": "Angetrieben von Apple",
+            "title": "Intelligent & effizient",
             "text":
-                "Khione nutzt Apple Intelligence auf dem Gerät, Siri-Integration und native SwiftUI-Performance für ein schnelles und privates Erlebnis."
+                "Khione kombiniert schnelle Reaktionen mit einer klaren, modernen Benutzeroberfläche für ein flüssiges und angenehmes Nutzungserlebnis."
         },
         {
             "title": "Privatsphäre zuerst",
             "text":
-                "Deine Unterhaltungen bleiben, wann immer möglich, auf deinem Gerät. Kein Tracking. Keine Werbung."
+                "Deine Eingaben werden verantwortungsvoll behandelt. Datenschutz und Transparenz stehen bei Khione an erster Stelle."
         }
     ]
 }

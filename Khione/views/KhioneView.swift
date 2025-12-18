@@ -28,6 +28,14 @@ struct KhioneView: View {
 
     @FocusState private var isInputFocused: Bool
 
+    @AppStorage("khione_language")
+    private var language =
+        Locale.current.language.languageCode?.identifier ?? "en"
+
+    private var text: KhioneViewLocalization {
+        Bundle.main.loadKhioneViewLocalization(language: language)
+    }
+
     // MARK: - Computed
     private var isImageMode: Bool {
         viewModel.selectedMode?.id == "image"
@@ -165,7 +173,7 @@ struct KhioneView: View {
                     }
 
                     if viewModel.isProcessing {
-                        ProgressView("Khione is thinking…")
+                        ProgressView(text.thinking)
                             .padding(.top)
                             .id("typing")
                     }
@@ -209,7 +217,7 @@ struct KhioneView: View {
             speechButton
 
             TextField(
-                "Message Khione…",
+                text.messagePlaceholder,
                 text: $inputText,
                 axis: .vertical
             )
@@ -248,9 +256,11 @@ struct KhioneView: View {
                     .font(.system(size: 44))
                     .foregroundStyle(.secondary)
 
-                Text("Bilder werden über Apple Image Playground erstellt")
+                Text(text.imageInfo)
                     .font(.footnote)
                     .foregroundColor(.secondary)
+
+                
             }
 
             Button {
@@ -258,7 +268,7 @@ struct KhioneView: View {
                 dismissInput()
                 showImagePlayground = true
             } label: {
-                Label("Image Playground öffnen", systemImage: "photo.artframe")
+                Label(text.openImagePlayground, systemImage: "photo.artframe")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -375,12 +385,12 @@ struct KhioneView: View {
                 if subscription.remainingMessagesToday > 0 {
                     Text("\(subscription.remainingMessagesToday)")
                         .font(.caption.bold())
-                    Text("Nachrichten verfügbar")
-                        .font(.caption)
+                    Text(text.messagesAvailable)                        .font(.caption)
                         .foregroundColor(.secondary)
                 } else {
                     RefillCountdownView(
-                        nextRefillDate: subscription.nextRefillDate
+                        nextRefillDate: subscription.nextRefillDate,
+                        localizedTemplate: text.nextMessageIn
                     )
                 }
 
@@ -431,6 +441,7 @@ struct KhioneView: View {
 
 struct RefillCountdownView: View {
     let nextRefillDate: Date
+    let localizedTemplate: String
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -439,7 +450,7 @@ struct RefillCountdownView: View {
                 0
             )
 
-            Text("Nächste Nachricht in \(format(remaining))")
+            Text(String(format: localizedTemplate, format(remaining)))
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -478,3 +489,4 @@ extension UIApplication {
             .environmentObject(ThemeManager())
     }
 }
+

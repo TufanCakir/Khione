@@ -11,6 +11,7 @@ final class ViewModel: ObservableObject {
     @Published private(set) var isProcessing = false
     @Published var errorMessage: String?
 
+    // MARK: - Modes
     @Published private(set) var modes: [KhioneMode] = Bundle.main
         .loadKhioneModes()
     @Published private(set) var selectedMode: KhioneMode?
@@ -27,16 +28,18 @@ final class ViewModel: ObservableObject {
 
     // MARK: - Mode Handling
     func setMode(_ mode: KhioneMode) {
+        guard selectedMode?.id != mode.id else { return }
         selectedMode = mode
-        session = nil  // reset context
+        resetSession()
     }
 
     func setModeByID(_ id: String) {
-        guard let mode = KhioneModeRegistry.all.first(where: { $0.id == id })
-        else {
-            return
-        }
+        guard let mode = modes.first(where: { $0.id == id }) else { return }
         setMode(mode)
+    }
+
+    private func resetSession() {
+        session = nil
     }
 
     // MARK: - Public API
@@ -44,95 +47,125 @@ final class ViewModel: ObservableObject {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || image != nil else { return }
 
-        cancel()
+        cancelCurrentTask()
 
-        messages.append(
-            ChatMessage(
-                role: .user,
-                text: trimmed.isEmpty ? nil : trimmed,
-                image: image
-            )
-        )
-
+        appendUserMessage(text: trimmed, image: image)
         isProcessing = true
         errorMessage = nil
 
         currentTask = Task { [weak self] in
-            await self?.generate(text: trimmed, hasImage: image != nil)
+            await self?.generateResponse(
+                text: trimmed,
+                hasImage: image != nil
+            )
         }
     }
 
     func cancel() {
-        currentTask?.cancel()
-        currentTask = nil
+        cancelCurrentTask()
         isProcessing = false
     }
 
+    private func cancelCurrentTask() {
+        currentTask?.cancel()
+        currentTask = nil
+    }
+
     // MARK: - Core Logic
-    private func generate(text: String, hasImage: Bool) async {
+    private func generateResponse(text: String, hasImage: Bool) async {
         guard model.isAvailable else {
-            errorMessage = "Language model is not available on this device."
-            isProcessing = false
+            handleError("Language model is not available on this device.")
             return
         }
 
-        let prompt = buildPrompt(text: text, hasImage: hasImage)
+        let prompt = buildPrompt(
+            userText: text,
+            hasImage: hasImage
+        )
 
         do {
-            let session = session ?? LanguageModelSession()
-            self.session = session
+            let activeSession = session ?? LanguageModelSession()
+            session = activeSession
 
-            let response = try await session.respond(to: prompt)
+            let response = try await activeSession.respond(to: prompt)
             guard !Task.isCancelled else { return }
 
-            messages.append(
-                ChatMessage(
-                    role: .assistant,
-                    text: response.content,
-                    image: nil
-                )
-            )
+            appendAssistantMessage(response.content)
+
         } catch is CancellationError {
             return
         } catch {
-            errorMessage = error.localizedDescription
+            handleError(error.localizedDescription)
         }
 
+        isProcessing = false
+    }
+
+    // MARK: - Message Handling
+    private func appendUserMessage(text: String, image: UIImage?) {
+        messages.append(
+            ChatMessage(
+                role: .user,
+                text: text.isEmpty ? nil : text,
+                image: image
+            )
+        )
+    }
+
+    private func appendAssistantMessage(_ text: String) {
+        messages.append(
+            ChatMessage(
+                role: .assistant,
+                text: text,
+                image: nil
+            )
+        )
+    }
+
+    private func handleError(_ message: String) {
+        errorMessage = message
         isProcessing = false
     }
 
     // MARK: - Prompt Builder
-    private func buildPrompt(text: String, hasImage: Bool) -> String {
-        var prompt = """
-            System:
-            \(currentSystemPrompt())
-            """
+    private func buildPrompt(userText: String, hasImage: Bool) -> String {
+        var components: [String] = []
+
+        components.append(systemPrompt())
 
         if hasImage {
-            prompt += """
-
-                IMPORTANT:
-                You cannot see images.
-                If the user asks about an image, clearly say this and ask for a description.
-                """
+            components.append(imageNotice())
         }
 
-        prompt += """
+        components.append(userPrompt(userText))
 
-            User:
-            \(text.isEmpty ? "Hello!" : text)
-            """
-
-        return prompt
+        return components.joined(separator: "\n\n")
     }
 
-    private func currentSystemPrompt() -> String {
+    private func systemPrompt() -> String {
         let base = """
+            System:
             You are Khione, a high-quality AI assistant.
             Always respond in the same language as the user.
-            Explain things clearly and naturally.
+            Be clear, natural and helpful.
             """
 
-        return base + "\n\n" + (selectedMode?.systemPrompt ?? "")
+        let modePrompt = selectedMode?.systemPrompt ?? ""
+        return base + "\n\n" + modePrompt
+    }
+
+    private func imageNotice() -> String {
+        """
+        IMPORTANT:
+        You cannot see images.
+        If the user refers to an image, clearly say this and ask for a description.
+        """
+    }
+
+    private func userPrompt(_ text: String) -> String {
+        """
+        User:
+        \(text.isEmpty ? "Hello!" : text)
+        """
     }
 }
