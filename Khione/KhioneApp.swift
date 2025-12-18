@@ -14,6 +14,9 @@ struct KhioneApp: App {
     @StateObject private var themeManager: ThemeManager
     @StateObject private var internet: InternetMonitor
 
+    @AppStorage("hasSeenOnboarding")
+    private var hasSeenOnboarding = false
+
     // MARK: - Init
     init() {
         let storeKitManager = StoreKitManager()
@@ -22,7 +25,6 @@ struct KhioneApp: App {
         _subscription = StateObject(
             wrappedValue: SubscriptionManager(storeKit: storeKitManager)
         )
-
         _themeManager = StateObject(wrappedValue: ThemeManager())
         _internet = StateObject(wrappedValue: InternetMonitor())
     }
@@ -30,19 +32,28 @@ struct KhioneApp: App {
     // MARK: - Scene
     var body: some Scene {
         WindowGroup {
-            RootView()
-                // MARK: - Environment
-                .environmentObject(storeKit)
-                .environmentObject(subscription)
-                .environmentObject(themeManager)
-                .environmentObject(internet)
-
-                // MARK: - Theme Application
-                .preferredColorScheme(themeManager.colorScheme)
-                .tint(themeManager.accentColor)
-                .onAppear {
-                    print("🧾 Active tier:", subscription.tier)
+            Group {
+                if hasSeenOnboarding {
+                    KhioneView()
+                } else {
+                    OnboardingView {
+                        hasSeenOnboarding = true
+                    }
                 }
+            }
+            // ✅ ENV FÜR ALLE
+            .environmentObject(storeKit)
+            .environmentObject(subscription)
+            .environmentObject(themeManager)
+            .environmentObject(internet)
+
+            // ✅ THEME GLOBAL
+            .preferredColorScheme(themeManager.colorScheme)
+            .tint(themeManager.accentColor)
+
+            .onAppear {
+                print("🧾 Active tier:", subscription.tier)
+            }
         }
     }
 }
