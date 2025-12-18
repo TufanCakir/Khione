@@ -17,6 +17,7 @@ struct KhioneView: View {
 
     @EnvironmentObject private var subscription: SubscriptionManager
     @EnvironmentObject private var themeManager: ThemeManager
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var inputText = ""
     @State private var selectedImage: UIImage?
@@ -109,6 +110,11 @@ struct KhioneView: View {
         }
         .onDisappear {
             dismissInput(animated: false)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                isInputFocused = false
+            }
         }
         .sheet(isPresented: $showUpgradeSheet) {
             SubscriptionView()
