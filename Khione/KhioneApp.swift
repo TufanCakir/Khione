@@ -34,7 +34,7 @@ struct KhioneApp: App {
         WindowGroup {
             Group {
                 if hasSeenOnboarding {
-                    KhioneView()
+                    RootView()
                 } else {
                     OnboardingView {
                         hasSeenOnboarding = true
