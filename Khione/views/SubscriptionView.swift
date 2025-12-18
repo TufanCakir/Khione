@@ -21,7 +21,7 @@ struct SubscriptionView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 28) {
 
                 header
                 plansCarousel
@@ -31,6 +31,8 @@ struct SubscriptionView: View {
                     Text(errorMessage)
                         .font(.footnote)
                         .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
             }
             .padding(.vertical)
@@ -54,7 +56,7 @@ private extension SubscriptionView {
 }
 
 private extension SubscriptionView {
-    
+
     var plansCarousel: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
@@ -66,33 +68,42 @@ private extension SubscriptionView {
             .padding(.horizontal)
         }
     }
-    
+
     @ViewBuilder
     func subscriptionCard(_ plan: SubscriptionPlan) -> some View {
-        let tier = SubscriptionTier(rawValue: plan.id)
+        let tier = SubscriptionTier(rawValue: plan.id) ?? .free
         let isActive = tier == subscription.tier
-        
+        let product = subscription.product(for: tier)
+
         VStack(spacing: 14) {
-            
+
             Text(plan.name)
                 .font(.title2.bold())
-            
-            Text(
-                priceText(
-                    for: tier,
-                    subscription: subscription
-                )
-            )
-            .foregroundColor(.secondary)
-            
+
+            if let product {
+                VStack(spacing: 2) {
+                    Text(product.displayPrice)
+                        .font(.headline)
+
+                    if let period = product.subscription?.subscriptionPeriod {
+                        Text(period.displayText)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            } else {
+                Text("Free")
+                    .foregroundColor(.secondary)
+            }
+
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(plan.features, id: \.self) { feature in
-                    Text("• \(feature)")
+                ForEach(plan.features, id: \.self) {
+                    Text("• \($0)")
                         .font(.footnote)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             if isActive {
                 Label(text.active, systemImage: "checkmark.seal.fill")
                     .foregroundColor(.green)
@@ -109,22 +120,17 @@ private extension SubscriptionView {
                 .stroke(isActive ? Color.accentColor : .clear, lineWidth: 2)
         )
     }
-}
 
+}
 
 private extension SubscriptionView {
 
-    func subscribeButton(for tier: SubscriptionTier?) -> some View {
+    func subscribeButton(for tier: SubscriptionTier) -> some View {
         Button(text.subscribe) {
-            Task {
-                await purchase(tier)
-            }
+            Task { await purchase(tier) }
         }
         .buttonStyle(.borderedProminent)
-        .disabled(
-            isPurchasing ||
-            tier?.productID == nil
-        )
+        .disabled(isPurchasing || tier.productID == nil)
     }
 
     var restoreButton: some View {
@@ -137,23 +143,9 @@ private extension SubscriptionView {
         .font(.footnote)
         .foregroundColor(.secondary)
     }
-}
 
-private extension SubscriptionView {
-
-
-        func priceText(
-            for tier: SubscriptionTier?,
-            subscription: SubscriptionManager
-        ) -> String {
-            guard let tier else { return "—" }
-            return subscription.price(for: tier)
-        }
-    
-
-    func purchase(_ tier: SubscriptionTier?) async {
+    func purchase(_ tier: SubscriptionTier) async {
         guard
-            let tier,
             let productID = tier.productID,
             let product = storeKit.product(for: productID)
         else { return }
@@ -171,6 +163,7 @@ private extension SubscriptionView {
         }
     }
 }
+
 
 
 #Preview {

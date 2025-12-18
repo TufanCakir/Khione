@@ -51,17 +51,27 @@ struct KhioneView: View {
         ZStack {
             themeManager.backgroundColor
                 .ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    dismissInput()
-                }
-
+            
             VStack(spacing: 0) {
                 messagesList
                 attachmentPreview
                 statusHintBar
-                footerBar
+                    .padding(.bottom, 2)
+
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                dismissInput()
+            }
+
+            .safeAreaInset(edge: .bottom) {
+                footerBar
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .padding(.horizontal)
+                    .padding(.bottom, 6)
+            }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .toolbar { toolbarContent }
         .imagePlaygroundSheet(
@@ -463,3 +473,4 @@ extension UIApplication {
             .environmentObject(ThemeManager())
     }
 }
+

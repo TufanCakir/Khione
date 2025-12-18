@@ -9,7 +9,7 @@ internal import Combine
 @MainActor
 final class StoreKitManager: ObservableObject {
 
-    // MARK: - Published State
+    // MARK: - Published
     @Published private(set) var products: [Product] = []
     @Published private(set) var activeTier: SubscriptionTier = .free
 
@@ -20,18 +20,22 @@ final class StoreKitManager: ObservableObject {
         "khione.infinity.monthly"
     ]
 
+    private var transactionTask: Task<Void, Never>?
+
     // MARK: - Init
     init() {
-        Task {
-            await start()
-        }
+        Task { await start() }
     }
 
-    // MARK: - Startup Flow (🔑 klar & deterministisch)
+    deinit {
+        transactionTask?.cancel()
+    }
+
+    // MARK: - Startup
     private func start() async {
         await loadProducts()
         await refreshEntitlements()
-        observeTransactions()
+        startObservingTransactions()
     }
 
     // MARK: - Load Products
@@ -39,7 +43,7 @@ final class StoreKitManager: ObservableObject {
         do {
             products = try await Product.products(for: productIDs)
         } catch {
-            print("❌ StoreKit: Failed to load products:", error)
+            print("❌ StoreKit loadProducts:", error)
         }
     }
 
@@ -50,27 +54,24 @@ final class StoreKitManager: ObservableObject {
         guard
             case .success(let verification) = result,
             case .verified(let transaction) = verification
-        else {
-            return
-        }
+        else { return }
 
         await transaction.finish()
         await refreshEntitlements()
     }
 
-    // MARK: - Observe Transactions (läuft im Hintergrund)
-    private func observeTransactions() {
-        Task.detached(priority: .background) {
+    // MARK: - Observe Transactions
+    private func startObservingTransactions() {
+        transactionTask = Task {
             for await result in Transaction.updates {
                 guard case .verified(let transaction) = result else { continue }
-
                 await transaction.finish()
-                await self.refreshEntitlements()
+                await refreshEntitlements()
             }
         }
     }
 
-    // MARK: - Entitlements (Single Source of Truth)
+    // MARK: - Entitlements
     func refreshEntitlements() async {
         var detectedTier: SubscriptionTier = .free
 
@@ -81,13 +82,9 @@ final class StoreKitManager: ObservableObject {
             case "khione.infinity.monthly":
                 detectedTier = .infinity
             case "khione.vision.monthly":
-                if detectedTier != .infinity {
-                    detectedTier = .vision
-                }
+                if detectedTier != .infinity { detectedTier = .vision }
             case "khione.pro.monthly":
-                if detectedTier == .free {
-                    detectedTier = .pro
-                }
+                if detectedTier == .free { detectedTier = .pro }
             default:
                 break
             }
@@ -96,8 +93,14 @@ final class StoreKitManager: ObservableObject {
         activeTier = detectedTier
     }
 
-    // MARK: - Helpers
+    // MARK: - Products
     func product(for productID: String) -> Product? {
         products.first { $0.id == productID }
     }
+
+    var activeProduct: Product? {
+        guard let id = activeTier.productID else { return nil }
+        return product(for: id)
+    }
 }
+

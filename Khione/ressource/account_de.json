@@ -1,26 +1,27 @@
 {
   "title": "Account",
 
-  "profile_name_placeholder": "Dein Name",
-  "profile_local": "Lokales Khione-Profil",
+  "profile_name_placeholder": "Name",
+  "profile_local": "Lokales Profil",
 
   "language_section": "Sprache",
-  "language_picker": "App-Sprache",
+  "language_picker": "Sprache auswählen",
   "language_de": "Deutsch",
   "language_en": "Englisch",
 
   "subscription_section": "Abonnement",
   "current_plan": "Aktueller Plan",
-  "upgrade": "Auf Pro oder Vision upgraden",
+  "upgrade": "Upgrade",
   "manage_subscription": "Abonnement verwalten",
-  "active_subscription": "Aktives Abonnement",
+  "active_subscription": "Aktiv",
+  "subscription_info": "Abonnements werden monatlich über den App Store abgerechnet und können jederzeit in den iOS-Einstellungen verwaltet oder gekündigt werden.",
 
   "app_section": "App",
-  "appearance": "Aussehen",
+  "appearance": "Erscheinungsbild",
 
   "about_section": "Über",
-  "version": "Version 1.0",
+  "version": "Version",
   "built_with": "Erstellt mit Apple Foundation Models",
   "tos": "Nutzungsbedingungen",
-  "privacy": "Datenschutzrichtlinie"
+  "privacy": "Datenschutz"
 }

@@ -22,6 +22,7 @@ struct AccountLocalization: Decodable {
     let upgrade: String
     let manageSubscription: String
     let activeSubscription: String
+    let subscriptionInfo: String
 
     let appSection: String
     let appearance: String
@@ -32,7 +33,8 @@ struct AccountLocalization: Decodable {
     let tos: String
     let privacy: String
 
-    // MARK: - Coding Keys (JSON bleibt unverändert)
+
+    // MARK: - Coding Keys
     enum CodingKeys: String, CodingKey {
         case title
 
@@ -49,6 +51,7 @@ struct AccountLocalization: Decodable {
         case upgrade
         case manageSubscription = "manage_subscription"
         case activeSubscription = "active_subscription"
+        case subscriptionInfo = "subscription_info"
 
         case appSection = "app_section"
         case appearance
@@ -59,8 +62,47 @@ struct AccountLocalization: Decodable {
         case tos
         case privacy
     }
+
 }
 
+extension AccountLocalization {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let f = AccountLocalization.fallback
+
+        title = try c.decodeIfPresent(String.self, forKey: .title) ?? f.title
+
+        profileNamePlaceholder = try c.decodeIfPresent(String.self, forKey: .profileNamePlaceholder) ?? f.profileNamePlaceholder
+        profileLocal = try c.decodeIfPresent(String.self, forKey: .profileLocal) ?? f.profileLocal
+
+        languageSection = try c.decodeIfPresent(String.self, forKey: .languageSection) ?? f.languageSection
+        languagePicker = try c.decodeIfPresent(String.self, forKey: .languagePicker) ?? f.languagePicker
+        languageDE = try c.decodeIfPresent(String.self, forKey: .languageDE) ?? f.languageDE
+        languageEN = try c.decodeIfPresent(String.self, forKey: .languageEN) ?? f.languageEN
+
+        subscriptionSection = try c.decodeIfPresent(String.self, forKey: .subscriptionSection) ?? f.subscriptionSection
+        currentPlan = try c.decodeIfPresent(String.self, forKey: .currentPlan) ?? f.currentPlan
+        upgrade = try c.decodeIfPresent(String.self, forKey: .upgrade) ?? f.upgrade
+        manageSubscription = try c.decodeIfPresent(String.self, forKey: .manageSubscription) ?? f.manageSubscription
+        activeSubscription = try c.decodeIfPresent(String.self, forKey: .activeSubscription) ?? f.activeSubscription
+        if let value = try c.decodeIfPresent(String.self, forKey: .subscriptionInfo) {
+            subscriptionInfo = value
+            print("✅ subscription_info loaded:", value)
+        } else {
+            subscriptionInfo = f.subscriptionInfo
+            print("⚠️ subscription_info missing → fallback used:", f.subscriptionInfo)
+        }
+
+        appSection = try c.decodeIfPresent(String.self, forKey: .appSection) ?? f.appSection
+        appearance = try c.decodeIfPresent(String.self, forKey: .appearance) ?? f.appearance
+
+        aboutSection = try c.decodeIfPresent(String.self, forKey: .aboutSection) ?? f.aboutSection
+        version = try c.decodeIfPresent(String.self, forKey: .version) ?? f.version
+        builtWith = try c.decodeIfPresent(String.self, forKey: .builtWith) ?? f.builtWith
+        tos = try c.decodeIfPresent(String.self, forKey: .tos) ?? f.tos
+        privacy = try c.decodeIfPresent(String.self, forKey: .privacy) ?? f.privacy
+    }
+}
 
 extension AccountLocalization {
 
@@ -68,7 +110,7 @@ extension AccountLocalization {
         title: "Account",
 
         profileNamePlaceholder: "Name",
-        profileLocal: "Local",
+        profileLocal: "Local profile",
 
         languageSection: "Language",
         languagePicker: "Select language",
@@ -80,6 +122,8 @@ extension AccountLocalization {
         upgrade: "Upgrade",
         manageSubscription: "Manage Subscription",
         activeSubscription: "Active",
+        subscriptionInfo:
+            "Abonnements werden monatlich über den App Store abgerechnet und können jederzeit in den iOS-Einstellungen verwaltet oder gekündigt werden.",
 
         appSection: "App",
         appearance: "Appearance",
@@ -92,37 +136,31 @@ extension AccountLocalization {
     )
 }
 
+
 extension Bundle {
 
-    func loadAccountLocalization(
-        language: String,
-        fallback: String = "en"
-    ) -> AccountLocalization {
+    func loadAccountLocalization(language: String, fallback: String = "en") -> AccountLocalization {
 
-        if let localization = loadLocalizationFile(language) {
-            return localization
+        if let loc = loadLocalizationFile(language) {
+            return loc
         }
 
-        if let fallbackLocalization = loadLocalizationFile(fallback) {
-            print("⚠️ Fallback localization used: \(fallback)")
-            return fallbackLocalization
+        if let fallbackLoc = loadLocalizationFile(fallback) {
+            print("⚠️ Using fallback localization: \(fallback)")
+            return fallbackLoc
         }
 
-        assertionFailure("❌ No valid AccountLocalization found")
+        print("❌ No localization found – using hard fallback")
         return .fallback
     }
 
     private func loadLocalizationFile(_ language: String) -> AccountLocalization? {
         let file = "account_\(language)"
+        guard let url = url(forResource: file, withExtension: "json"),
+              let data = try? Data(contentsOf: url)
+        else { return nil }
 
-        guard
-            let url = url(forResource: file, withExtension: "json"),
-            let data = try? Data(contentsOf: url),
-            let decoded = try? JSONDecoder().decode(AccountLocalization.self, from: data)
-        else {
-            return nil
-        }
-
-        return decoded
+        return try? JSONDecoder().decode(AccountLocalization.self, from: data)
     }
 }
+

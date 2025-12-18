@@ -158,4 +158,16 @@ final class SubscriptionManager: ObservableObject {
             return allModes.filter { ids.contains($0.id) }
         }
     }
+    // MARK: - StoreKit Proxies (UI-safe)
+
+    // SubscriptionManager.swift
+    var activeProduct: Product? {
+        guard let id = tier.productID else { return nil }
+        return storeKit.product(for: id)
+    }
+
+    func product(for tier: SubscriptionTier) -> Product? {
+        guard let id = tier.productID else { return nil }
+        return storeKit.product(for: id)
+    }
 }

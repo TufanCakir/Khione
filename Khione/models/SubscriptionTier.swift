@@ -7,27 +7,21 @@
 
 import Foundation
 
-enum SubscriptionTier: String, Codable, Identifiable {
+enum SubscriptionTier: String {
     case free
     case pro
     case vision
     case infinity
 
-    var id: String { rawValue }
-
     var productID: String? {
         switch self {
-        case .free:
-            return nil
-        case .pro:
-            return "khione.pro.monthly"
-        case .vision:
-            return "khione.vision.monthly"
-        case .infinity:
-            return "khione.infinity.monthly"
-
+        case .pro: return "khione.pro.monthly"
+        case .vision: return "khione.vision.monthly"
+        case .infinity: return "khione.infinity.monthly"
+        default: return nil
         }
     }
+
 
     var displayName: String {
         switch self {

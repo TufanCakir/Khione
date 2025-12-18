@@ -22,6 +22,7 @@ struct KhioneApp: App {
         _subscription = StateObject(
             wrappedValue: SubscriptionManager(storeKit: storeKitManager)
         )
+
         _themeManager = StateObject(wrappedValue: ThemeManager())
         _internet = StateObject(wrappedValue: InternetMonitor())
     }
@@ -39,6 +40,9 @@ struct KhioneApp: App {
                 // MARK: - Theme Application
                 .preferredColorScheme(themeManager.colorScheme)
                 .tint(themeManager.accentColor)
+                .onAppear {
+                    print("🧾 Active tier:", subscription.tier)
+                }
         }
     }
 }
