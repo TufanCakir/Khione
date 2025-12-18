@@ -3,11 +3,11 @@
 //  Khione
 //
 
+import AVFAudio
+import AVFoundation
+internal import Combine
 import Foundation
 import Speech
-import AVFoundation
-import AVFAudio
-internal import Combine
 
 @MainActor
 final class SpeechRecognizer: ObservableObject {
@@ -25,11 +25,12 @@ final class SpeechRecognizer: ObservableObject {
     var isRecording: Bool { state == .recording }
 
     // ✅ Technische Ressourcen → explizit freigegeben
-       nonisolated(unsafe) private let audioEngine = AVAudioEngine()
-       nonisolated(unsafe) private let recognizer: SFSpeechRecognizer?
+    nonisolated(unsafe) private let audioEngine = AVAudioEngine()
+    nonisolated(unsafe) private let recognizer: SFSpeechRecognizer?
 
     // 🔥 DAS ist der Schlüssel
-    nonisolated(unsafe) private var request: SFSpeechAudioBufferRecognitionRequest?
+    nonisolated(unsafe) private var request:
+        SFSpeechAudioBufferRecognitionRequest?
     nonisolated(unsafe) private var task: SFSpeechRecognitionTask?
 
     private var permissionGranted: Bool?
@@ -57,11 +58,15 @@ final class SpeechRecognizer: ObservableObject {
         if let cached = permissionGranted { return cached }
 
         let speechAuth = await withCheckedContinuation { cont in
-            SFSpeechRecognizer.requestAuthorization { cont.resume(returning: $0) }
+            SFSpeechRecognizer.requestAuthorization {
+                cont.resume(returning: $0)
+            }
         }
 
         let micAuth = await withCheckedContinuation { cont in
-            AVAudioApplication.requestRecordPermission { cont.resume(returning: $0) }
+            AVAudioApplication.requestRecordPermission {
+                cont.resume(returning: $0)
+            }
         }
 
         let granted = (speechAuth == .authorized && micAuth)
@@ -99,7 +104,8 @@ final class SpeechRecognizer: ObservableObject {
         audioEngine.prepare()
         try audioEngine.start()
 
-        task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+        task = recognizer.recognitionTask(with: request) {
+            [weak self] result, error in
             guard let self else { return }
 
             Task { @MainActor in

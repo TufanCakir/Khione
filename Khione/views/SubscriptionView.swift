@@ -5,8 +5,8 @@
 //  Created by Tufan Cakir on 14.12.25.
 //
 
-import SwiftUI
 import StoreKit
+import SwiftUI
 
 struct SubscriptionView: View {
 
@@ -41,9 +41,9 @@ struct SubscriptionView: View {
     }
 }
 
-private extension SubscriptionView {
+extension SubscriptionView {
 
-    var header: some View {
+    fileprivate var header: some View {
         VStack(spacing: 8) {
             Text(text.title)
                 .font(.largeTitle.bold())
@@ -55,9 +55,9 @@ private extension SubscriptionView {
     }
 }
 
-private extension SubscriptionView {
+extension SubscriptionView {
 
-    var plansCarousel: some View {
+    fileprivate var plansCarousel: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
                 ForEach(subscription.plans) { plan in
@@ -70,7 +70,7 @@ private extension SubscriptionView {
     }
 
     @ViewBuilder
-    func subscriptionCard(_ plan: SubscriptionPlan) -> some View {
+    fileprivate func subscriptionCard(_ plan: SubscriptionPlan) -> some View {
         let tier = SubscriptionTier(rawValue: plan.id) ?? .free
         let isActive = tier == subscription.tier
         let product = subscription.product(for: tier)
@@ -123,9 +123,9 @@ private extension SubscriptionView {
 
 }
 
-private extension SubscriptionView {
+extension SubscriptionView {
 
-    func subscribeButton(for tier: SubscriptionTier) -> some View {
+    fileprivate func subscribeButton(for tier: SubscriptionTier) -> some View {
         Button(text.subscribe) {
             Task { await purchase(tier) }
         }
@@ -133,7 +133,7 @@ private extension SubscriptionView {
         .disabled(isPurchasing || tier.productID == nil)
     }
 
-    var restoreButton: some View {
+    fileprivate var restoreButton: some View {
         Button(text.restore) {
             Task {
                 await subscription.syncWithStoreKit()
@@ -144,7 +144,7 @@ private extension SubscriptionView {
         .foregroundColor(.secondary)
     }
 
-    func purchase(_ tier: SubscriptionTier) async {
+    fileprivate func purchase(_ tier: SubscriptionTier) async {
         guard
             let productID = tier.productID,
             let product = storeKit.product(for: productID)
@@ -164,13 +164,11 @@ private extension SubscriptionView {
     }
 }
 
-
-
 #Preview {
     let storeKit = StoreKitManager()
     let subscription = SubscriptionManager(storeKit: storeKit)
-    
+
     SubscriptionView()
         .environmentObject(storeKit)
         .environmentObject(subscription)
-} 
+}

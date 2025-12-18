@@ -49,7 +49,7 @@ struct AnimatedRainbowBorder: ViewModifier {
         angle = 0
         withAnimation(
             .linear(duration: 2.8)
-            .repeatForever(autoreverses: false)
+                .repeatForever(autoreverses: false)
         ) {
             angle = 360
         }
@@ -68,7 +68,7 @@ struct AnimatedRainbowBorder: ViewModifier {
             .pink,
             .orange,
             .yellow,
-            .cyan
+            .cyan,
         ]
     }
 }

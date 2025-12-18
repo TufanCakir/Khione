@@ -32,9 +32,9 @@ struct AppearanceView: View {
     }
 }
 
-private extension AppearanceView {
+extension AppearanceView {
 
-    func themeRow(_ theme: AppTheme) -> some View {
+    fileprivate func themeRow(_ theme: AppTheme) -> some View {
         Button {
             withAnimation(.easeInOut(duration: 0.2)) {
                 themeManager.selectTheme(theme)
@@ -49,8 +49,8 @@ private extension AppearanceView {
                     .frame(width: 36, height: 36)
                     .foregroundStyle(
                         theme.id == themeManager.selectedTheme.id
-                        ? Color.accentColor
-                        : Color.secondary
+                            ? Color.accentColor
+                            : Color.secondary
                     )
                     .background(
                         Circle()
@@ -82,9 +82,9 @@ private extension AppearanceView {
     }
 }
 
-private extension AppearanceView {
+extension AppearanceView {
 
-    func themeDescription(_ theme: AppTheme) -> String {
+    fileprivate func themeDescription(_ theme: AppTheme) -> String {
         switch theme.preferredScheme {
         case "system":
             return "Passt sich automatisch an"
@@ -97,8 +97,6 @@ private extension AppearanceView {
         }
     }
 }
-
-
 
 #Preview {
     NavigationStack {

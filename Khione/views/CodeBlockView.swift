@@ -34,7 +34,8 @@ struct CodeBlockView: View {
                 Button(action: copy) {
                     Label(
                         copied ? "Copied" : "Copy",
-                        systemImage: copied ? "checkmark.circle.fill" : "doc.on.doc"
+                        systemImage: copied
+                            ? "checkmark.circle.fill" : "doc.on.doc"
                     )
                 }
                 .font(.caption)

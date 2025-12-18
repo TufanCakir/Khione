@@ -3,8 +3,8 @@
 //  Khione
 //
 
-import SwiftUI
 import StoreKit
+import SwiftUI
 
 struct AccountView: View {
 
@@ -15,7 +15,8 @@ struct AccountView: View {
     // MARK: - Storage
     @AppStorage("khione_username") private var username = ""
     @AppStorage("khione_language")
-    private var language = Locale.current.language.languageCode?.identifier ?? "en"
+    private var language =
+        Locale.current.language.languageCode?.identifier ?? "en"
 
     // MARK: - Links
     private let tosURL = URL(string: "https://khione-tos.netlify.app/")!
@@ -28,11 +29,13 @@ struct AccountView: View {
 
     // MARK: - Computed
     private var initials: String {
-        let letters = username
+        let letters =
+            username
             .split(separator: " ")
             .prefix(2)
             .compactMap(\.first)
-        return letters.isEmpty ? "?" : letters.map { String($0).uppercased() }.joined()
+        return letters.isEmpty
+            ? "?" : letters.map { String($0).uppercased() }.joined()
     }
 
     // MARK: - Body
@@ -56,9 +59,9 @@ struct AccountView: View {
     }
 }
 
-private extension AccountView {
+extension AccountView {
 
-    var profileSection: some View {
+    fileprivate var profileSection: some View {
         Section {
             VStack(spacing: 14) {
 
@@ -75,7 +78,6 @@ private extension AccountView {
                 TextField(text.profileNamePlaceholder, text: $username)
                     .submitLabel(.done)
 
-
                 Text(text.profileLocal)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -85,9 +87,9 @@ private extension AccountView {
     }
 }
 
-private extension AccountView {
+extension AccountView {
 
-    var subscriptionSection: some View {
+    fileprivate var subscriptionSection: some View {
         Section(text.subscriptionSection) {
             VStack(spacing: 16) {
 
@@ -104,7 +106,7 @@ private extension AccountView {
         }
     }
 
-    var headerRow: some View {
+    fileprivate var headerRow: some View {
         HStack {
             Label(text.currentPlan, systemImage: "crown")
                 .font(.subheadline.weight(.medium))
@@ -113,7 +115,7 @@ private extension AccountView {
         }
     }
 
-    var infoRow: some View {
+    fileprivate var infoRow: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "info.circle.fill")
                 .foregroundColor(.secondary)
@@ -124,12 +126,13 @@ private extension AccountView {
         }
     }
 
-    var subscriptionAction: some View {
+    fileprivate var subscriptionAction: some View {
         NavigationLink {
             ViewFactory.view(for: .subscription)
         } label: {
             Label(
-                subscription.tier == .free ? text.upgrade : text.manageSubscription,
+                subscription.tier == .free
+                    ? text.upgrade : text.manageSubscription,
                 systemImage: "eurosign.circle.fill"
             )
             .font(.callout.weight(.semibold))
@@ -141,7 +144,7 @@ private extension AccountView {
     }
 
     @ViewBuilder
-    var activeBadge: some View {
+    fileprivate var activeBadge: some View {
         if subscription.tier != .free {
             Label(text.activeSubscription, systemImage: "checkmark.seal.fill")
                 .font(.footnote.weight(.medium))
@@ -150,10 +153,10 @@ private extension AccountView {
     }
 }
 
-private extension AccountView {
+extension AccountView {
 
     @ViewBuilder
-    var planBadge: some View {
+    fileprivate var planBadge: some View {
         switch subscription.tier {
         case .free:
             VStack(alignment: .trailing, spacing: 2) {
@@ -170,7 +173,7 @@ private extension AccountView {
         }
     }
 
-    func priceBadge(_ product: Product) -> some View {
+    fileprivate func priceBadge(_ product: Product) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
             Text(product.displayPrice)
                 .font(.caption.bold())
@@ -187,9 +190,9 @@ private extension AccountView {
     }
 }
 
-private extension AccountView {
+extension AccountView {
 
-    var languageSection: some View {
+    fileprivate var languageSection: some View {
         Section(text.languageSection) {
             Picker(text.languagePicker, selection: $language) {
                 Text(text.languageDE).tag("de")
@@ -202,7 +205,7 @@ private extension AccountView {
         }
     }
 
-    var appSection: some View {
+    fileprivate var appSection: some View {
         Section(text.appSection) {
             NavigationLink {
                 AppearanceView()
@@ -212,7 +215,7 @@ private extension AccountView {
         }
     }
 
-    var aboutSection: some View {
+    fileprivate var aboutSection: some View {
         Section(text.aboutSection) {
             NavigationLink {
                 KhioneInfoView()
@@ -220,7 +223,6 @@ private extension AccountView {
                 Label("Khione", systemImage: "snowflake")
             }
 
-            
             Label(Bundle.main.appVersionString, systemImage: "number")
                 .foregroundColor(.secondary)
             Label(text.builtWith, systemImage: "applelogo")
@@ -236,8 +238,8 @@ private extension AccountView {
     }
 }
 
-private extension View {
-    func badgeStyle() -> some View {
+extension View {
+    fileprivate func badgeStyle() -> some View {
         self
             .font(.caption.bold())
             .padding(.horizontal, 12)
@@ -245,10 +247,12 @@ private extension View {
             .background(Capsule().fill(Color.secondary.opacity(0.15)))
     }
 
-    func hideKeyboard() {
+    fileprivate func hideKeyboard() {
         UIApplication.shared.sendAction(
             #selector(UIResponder.resignFirstResponder),
-            to: nil, from: nil, for: nil
+            to: nil,
+            from: nil,
+            for: nil
         )
     }
 }
@@ -268,7 +272,6 @@ extension Bundle {
     }
 }
 
-
 #Preview {
     let storeKit = StoreKitManager()
     let subscription = SubscriptionManager(storeKit: storeKit)
@@ -279,4 +282,3 @@ extension Bundle {
             .environmentObject(subscription)
     }
 }
-

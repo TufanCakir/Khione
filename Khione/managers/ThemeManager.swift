@@ -3,8 +3,8 @@
 //  Khione
 //
 
-import SwiftUI
 internal import Combine
+import SwiftUI
 
 @MainActor
 final class ThemeManager: ObservableObject {
@@ -18,7 +18,8 @@ final class ThemeManager: ObservableObject {
     // MARK: - Init
     init() {
         let loadedThemes = Bundle.main.loadThemes()
-        self.themes = loadedThemes.isEmpty
+        self.themes =
+            loadedThemes.isEmpty
             ? [ThemeManager.fallbackTheme]
             : loadedThemes
     }
@@ -26,8 +27,8 @@ final class ThemeManager: ObservableObject {
     // MARK: - Selected Theme
     var selectedTheme: AppTheme {
         themes.first { $0.id == selectedThemeID }
-        ?? themes.first { $0.id == "system" }
-        ?? themes.first!
+            ?? themes.first { $0.id == "system" }
+            ?? themes.first!
     }
 
     // MARK: - Background Color
@@ -52,7 +53,7 @@ final class ThemeManager: ObservableObject {
         case "dark":
             return .dark
         default:
-            return nil // system
+            return nil  // system
         }
     }
 
@@ -78,9 +79,9 @@ final class ThemeManager: ObservableObject {
     }
 }
 
-private extension ThemeManager {
+extension ThemeManager {
 
-    static let fallbackTheme = AppTheme(
+    fileprivate static let fallbackTheme = AppTheme(
         id: "system",
         name: "System",
         icon: "circle.lefthalf.filled",

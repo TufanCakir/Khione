@@ -1,26 +1,26 @@
 [
-  {
-    "id": "system",
-    "name": "System",
-    "icon": "circle.lefthalf.filled",
-    "accentColor": "",
-    "backgroundColor": "",
-    "preferredScheme": "system"
-  },
-  {
-    "id": "system_light",
-    "name": "System Light",
-    "icon": "sun.max.circle",
-    "accentColor": "",
-    "backgroundColor": "",
-    "preferredScheme": "light"
-  },
-  {
-    "id": "system_dark",
-    "name": "System Dark",
-    "icon": "moon.circle",
-    "accentColor": "",
-    "backgroundColor": "",
-    "preferredScheme": "dark"
-  }
+    {
+        "id": "system",
+        "name": "System",
+        "icon": "circle.lefthalf.filled",
+        "accentColor": "",
+        "backgroundColor": "",
+        "preferredScheme": "system"
+    },
+    {
+        "id": "system_light",
+        "name": "System Light",
+        "icon": "sun.max.circle",
+        "accentColor": "",
+        "backgroundColor": "",
+        "preferredScheme": "light"
+    },
+    {
+        "id": "system_dark",
+        "name": "System Dark",
+        "icon": "moon.circle",
+        "accentColor": "",
+        "backgroundColor": "",
+        "preferredScheme": "dark"
+    }
 ]

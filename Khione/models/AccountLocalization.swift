@@ -33,7 +33,6 @@ struct AccountLocalization: Decodable {
     let tos: String
     let privacy: String
 
-
     // MARK: - Coding Keys
     enum CodingKeys: String, CodingKey {
         case title
@@ -72,35 +71,72 @@ extension AccountLocalization {
 
         title = try c.decodeIfPresent(String.self, forKey: .title) ?? f.title
 
-        profileNamePlaceholder = try c.decodeIfPresent(String.self, forKey: .profileNamePlaceholder) ?? f.profileNamePlaceholder
-        profileLocal = try c.decodeIfPresent(String.self, forKey: .profileLocal) ?? f.profileLocal
+        profileNamePlaceholder =
+            try c.decodeIfPresent(String.self, forKey: .profileNamePlaceholder)
+            ?? f.profileNamePlaceholder
+        profileLocal =
+            try c.decodeIfPresent(String.self, forKey: .profileLocal)
+            ?? f.profileLocal
 
-        languageSection = try c.decodeIfPresent(String.self, forKey: .languageSection) ?? f.languageSection
-        languagePicker = try c.decodeIfPresent(String.self, forKey: .languagePicker) ?? f.languagePicker
-        languageDE = try c.decodeIfPresent(String.self, forKey: .languageDE) ?? f.languageDE
-        languageEN = try c.decodeIfPresent(String.self, forKey: .languageEN) ?? f.languageEN
+        languageSection =
+            try c.decodeIfPresent(String.self, forKey: .languageSection)
+            ?? f.languageSection
+        languagePicker =
+            try c.decodeIfPresent(String.self, forKey: .languagePicker)
+            ?? f.languagePicker
+        languageDE =
+            try c.decodeIfPresent(String.self, forKey: .languageDE)
+            ?? f.languageDE
+        languageEN =
+            try c.decodeIfPresent(String.self, forKey: .languageEN)
+            ?? f.languageEN
 
-        subscriptionSection = try c.decodeIfPresent(String.self, forKey: .subscriptionSection) ?? f.subscriptionSection
-        currentPlan = try c.decodeIfPresent(String.self, forKey: .currentPlan) ?? f.currentPlan
-        upgrade = try c.decodeIfPresent(String.self, forKey: .upgrade) ?? f.upgrade
-        manageSubscription = try c.decodeIfPresent(String.self, forKey: .manageSubscription) ?? f.manageSubscription
-        activeSubscription = try c.decodeIfPresent(String.self, forKey: .activeSubscription) ?? f.activeSubscription
-        if let value = try c.decodeIfPresent(String.self, forKey: .subscriptionInfo) {
+        subscriptionSection =
+            try c.decodeIfPresent(String.self, forKey: .subscriptionSection)
+            ?? f.subscriptionSection
+        currentPlan =
+            try c.decodeIfPresent(String.self, forKey: .currentPlan)
+            ?? f.currentPlan
+        upgrade =
+            try c.decodeIfPresent(String.self, forKey: .upgrade) ?? f.upgrade
+        manageSubscription =
+            try c.decodeIfPresent(String.self, forKey: .manageSubscription)
+            ?? f.manageSubscription
+        activeSubscription =
+            try c.decodeIfPresent(String.self, forKey: .activeSubscription)
+            ?? f.activeSubscription
+        if let value = try c.decodeIfPresent(
+            String.self,
+            forKey: .subscriptionInfo
+        ) {
             subscriptionInfo = value
             print("✅ subscription_info loaded:", value)
         } else {
             subscriptionInfo = f.subscriptionInfo
-            print("⚠️ subscription_info missing → fallback used:", f.subscriptionInfo)
+            print(
+                "⚠️ subscription_info missing → fallback used:",
+                f.subscriptionInfo
+            )
         }
 
-        appSection = try c.decodeIfPresent(String.self, forKey: .appSection) ?? f.appSection
-        appearance = try c.decodeIfPresent(String.self, forKey: .appearance) ?? f.appearance
+        appSection =
+            try c.decodeIfPresent(String.self, forKey: .appSection)
+            ?? f.appSection
+        appearance =
+            try c.decodeIfPresent(String.self, forKey: .appearance)
+            ?? f.appearance
 
-        aboutSection = try c.decodeIfPresent(String.self, forKey: .aboutSection) ?? f.aboutSection
-        version = try c.decodeIfPresent(String.self, forKey: .version) ?? f.version
-        builtWith = try c.decodeIfPresent(String.self, forKey: .builtWith) ?? f.builtWith
+        aboutSection =
+            try c.decodeIfPresent(String.self, forKey: .aboutSection)
+            ?? f.aboutSection
+        version =
+            try c.decodeIfPresent(String.self, forKey: .version) ?? f.version
+        builtWith =
+            try c.decodeIfPresent(String.self, forKey: .builtWith)
+            ?? f.builtWith
         tos = try c.decodeIfPresent(String.self, forKey: .tos) ?? f.tos
-        privacy = try c.decodeIfPresent(String.self, forKey: .privacy) ?? f.privacy
+        privacy =
+            try c.decodeIfPresent(String.self, forKey: .privacy) ?? f.privacy
     }
 }
 
@@ -136,10 +172,11 @@ extension AccountLocalization {
     )
 }
 
-
 extension Bundle {
 
-    func loadAccountLocalization(language: String, fallback: String = "en") -> AccountLocalization {
+    func loadAccountLocalization(language: String, fallback: String = "en")
+        -> AccountLocalization
+    {
 
         if let loc = loadLocalizationFile(language) {
             return loc
@@ -154,13 +191,14 @@ extension Bundle {
         return .fallback
     }
 
-    private func loadLocalizationFile(_ language: String) -> AccountLocalization? {
+    private func loadLocalizationFile(_ language: String)
+        -> AccountLocalization?
+    {
         let file = "account_\(language)"
         guard let url = url(forResource: file, withExtension: "json"),
-              let data = try? Data(contentsOf: url)
+            let data = try? Data(contentsOf: url)
         else { return nil }
 
         return try? JSONDecoder().decode(AccountLocalization.self, from: data)
     }
 }
-

@@ -1,27 +1,28 @@
 {
-  "title": "Account",
+    "title": "Account",
 
-  "profile_name_placeholder": "Name",
-  "profile_local": "Lokales Profil",
+    "profile_name_placeholder": "Name",
+    "profile_local": "Lokales Profil",
 
-  "language_section": "Sprache",
-  "language_picker": "Sprache auswählen",
-  "language_de": "Deutsch",
-  "language_en": "Englisch",
+    "language_section": "Sprache",
+    "language_picker": "Sprache auswählen",
+    "language_de": "Deutsch",
+    "language_en": "Englisch",
 
-  "subscription_section": "Abonnement",
-  "current_plan": "Aktueller Plan",
-  "upgrade": "Upgrade",
-  "manage_subscription": "Abonnement verwalten",
-  "active_subscription": "Aktiv",
-  "subscription_info": "Abonnements werden monatlich über den App Store abgerechnet und können jederzeit in den iOS-Einstellungen verwaltet oder gekündigt werden.",
+    "subscription_section": "Abonnement",
+    "current_plan": "Aktueller Plan",
+    "upgrade": "Upgrade",
+    "manage_subscription": "Abonnement verwalten",
+    "active_subscription": "Aktiv",
+    "subscription_info":
+        "Abonnements werden monatlich über den App Store abgerechnet und können jederzeit in den iOS-Einstellungen verwaltet oder gekündigt werden.",
 
-  "app_section": "App",
-  "appearance": "Erscheinungsbild",
+    "app_section": "App",
+    "appearance": "Erscheinungsbild",
 
-  "about_section": "Über",
-  "version": "Version",
-  "built_with": "Erstellt mit Apple Foundation Models",
-  "tos": "Nutzungsbedingungen",
-  "privacy": "Datenschutz"
+    "about_section": "Über",
+    "version": "Version",
+    "built_with": "Erstellt mit Apple Foundation Models",
+    "tos": "Nutzungsbedingungen",
+    "privacy": "Datenschutz"
 }

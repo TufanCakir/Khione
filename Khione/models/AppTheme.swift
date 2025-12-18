@@ -27,11 +27,10 @@ struct AppTheme: Identifiable, Decodable {
         switch preferredScheme {
         case "light": return .light
         case "dark": return .dark
-        default: return nil // system
+        default: return nil  // system
         }
     }
 }
-
 
 extension Bundle {
 

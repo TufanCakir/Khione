@@ -5,9 +5,9 @@
 //  Created by Tufan Cakir on 14.12.25.
 //
 
-import SwiftUI
-import StoreKit
 import ImagePlayground
+import StoreKit
+import SwiftUI
 
 struct KhioneView: View {
 
@@ -27,7 +27,6 @@ struct KhioneView: View {
 
     @FocusState private var isInputFocused: Bool
 
-
     // MARK: - Computed
     private var isImageMode: Bool {
         viewModel.selectedMode?.id == "image"
@@ -35,13 +34,15 @@ struct KhioneView: View {
 
     private var canSend: Bool {
         guard !viewModel.isProcessing,
-              let mode = viewModel.selectedMode else { return false }
+            let mode = viewModel.selectedMode
+        else { return false }
 
         if mode.id == "image" {
             return true
         }
 
-        return !inputText
+        return
+            !inputText
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .isEmpty
     }
@@ -51,7 +52,7 @@ struct KhioneView: View {
         ZStack {
             themeManager.backgroundColor
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 messagesList
                 attachmentPreview
@@ -67,11 +68,11 @@ struct KhioneView: View {
             .safeAreaInset(edge: .bottom) {
                 footerBar
                     .background(.ultraThinMaterial)
+                    .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .padding(.horizontal)
                     .padding(.bottom, 6)
             }
-            .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .toolbar { toolbarContent }
         .imagePlaygroundSheet(
@@ -99,7 +100,9 @@ struct KhioneView: View {
             }
 
             // Apply start mode from UserDefaults once, if present
-            if let modeID = UserDefaults.standard.string(forKey: "khione_start_mode") {
+            if let modeID = UserDefaults.standard.string(
+                forKey: "khione_start_mode"
+            ) {
                 viewModel.setModeByID(modeID)
                 UserDefaults.standard.removeObject(forKey: "khione_start_mode")
             }
@@ -111,7 +114,6 @@ struct KhioneView: View {
             SubscriptionView()
         }
     }
-
 
     // MARK: - Toolbar
     private var toolbarContent: some ToolbarContent {
@@ -199,7 +201,7 @@ struct KhioneView: View {
 
             attachmentButton
             speechButton
-            
+
             TextField(
                 "Message Khione…",
                 text: $inputText,
@@ -230,7 +232,6 @@ struct KhioneView: View {
             UIApplication.shared.dismissKeyboard()
         }
     }
-
 
     // MARK: - Image Footer
     private var imageFooter: some View {
@@ -357,12 +358,12 @@ struct KhioneView: View {
         }
     }
 
-
     // MARK: - Status Hint
     @ViewBuilder
     private var statusHintBar: some View {
-        if subscription.tier == .free &&
-            (isInputFocused || subscription.remainingMessagesToday == 0) {
+        if subscription.tier == .free
+            && (isInputFocused || subscription.remainingMessagesToday == 0)
+        {
 
             HStack {
                 if subscription.remainingMessagesToday > 0 {
@@ -413,7 +414,6 @@ struct KhioneView: View {
         selectedImage = nil
     }
 
-
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         if let last = viewModel.messages.last {
             withAnimation(.easeOut(duration: 0.2)) {
@@ -422,7 +422,6 @@ struct KhioneView: View {
         }
     }
 }
-
 
 struct RefillCountdownView: View {
     let nextRefillDate: Date
@@ -473,4 +472,3 @@ extension UIApplication {
             .environmentObject(ThemeManager())
     }
 }
-

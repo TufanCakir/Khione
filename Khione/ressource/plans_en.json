@@ -1,87 +1,87 @@
 [
-  {
-    "id": "free",
-    "name": "Kostenlos",
-    "dailyMessageLimit": 20,
-    "allowedModes": [
-      "chat",
-      "tutor",
-      "writer",
-      "decision",
-      "polite",
-      "strict",
-      "accessibility"
-    ],
-    "features": [
-      "Everyday conversations & creative writing",
-      "Learning, writing & clear answers",
-      "Accessibility & voice input",
-      "Perfect for exploring Khione"
-    ]
-  },
-  {
-    "id": "pro",
-    "name": "Pro",
-    "dailyMessageLimit": 200,
-    "allowedModes": [
-      "chat",
-      "tutor",
-      "writer",
-      "decision",
-      "polite",
-      "strict",
-      "accessibility",
-      "tech",
-      "programming",
-      "analysis",
-      "debug",
-      "refactor"
-    ],
-    "features": [
-      "Advanced analysis & reasoning capabilities",
-      "Programming, debugging & refactoring",
-      "Technical and productive workflows",
-      "For ambitious users & developers"
-    ]
-  },
-  {
-    "id": "vision",
-    "name": "Vision",
-    "dailyMessageLimit": 2000,
-    "allowedModes": [
-      "chat",
-      "tutor",
-      "writer",
-      "decision",
-      "polite",
-      "strict",
-      "accessibility",
-      "tech",
-      "programming",
-      "analysis",
-      "debug",
-      "refactor",
-      "architect",
-      "security",
-      "image"
-    ],
-    "features": [
-      "Visual reasoning & image generation",
-      "Architecture, security & system modes",
-      "Analyze & create images",
-      "Apple Intelligence Image Playground"
-    ]
-  },
-  {
-    "id": "infinity",
-    "name": "Infinity",
-    "dailyMessageLimit": 20000,
-    "allowedModes": "all",
-    "features": [
-      "Unlimited access to all features",
-      "Maximum performance with no limits",
-      "All current & future modes",
-      "The complete Khione experience"
-    ]
-  }
+    {
+        "id": "free",
+        "name": "Kostenlos",
+        "dailyMessageLimit": 20,
+        "allowedModes": [
+            "chat",
+            "tutor",
+            "writer",
+            "decision",
+            "polite",
+            "strict",
+            "accessibility"
+        ],
+        "features": [
+            "Everyday conversations & creative writing",
+            "Learning, writing & clear answers",
+            "Accessibility & voice input",
+            "Perfect for exploring Khione"
+        ]
+    },
+    {
+        "id": "pro",
+        "name": "Pro",
+        "dailyMessageLimit": 200,
+        "allowedModes": [
+            "chat",
+            "tutor",
+            "writer",
+            "decision",
+            "polite",
+            "strict",
+            "accessibility",
+            "tech",
+            "programming",
+            "analysis",
+            "debug",
+            "refactor"
+        ],
+        "features": [
+            "Advanced analysis & reasoning capabilities",
+            "Programming, debugging & refactoring",
+            "Technical and productive workflows",
+            "For ambitious users & developers"
+        ]
+    },
+    {
+        "id": "vision",
+        "name": "Vision",
+        "dailyMessageLimit": 2000,
+        "allowedModes": [
+            "chat",
+            "tutor",
+            "writer",
+            "decision",
+            "polite",
+            "strict",
+            "accessibility",
+            "tech",
+            "programming",
+            "analysis",
+            "debug",
+            "refactor",
+            "architect",
+            "security",
+            "image"
+        ],
+        "features": [
+            "Visual reasoning & image generation",
+            "Architecture, security & system modes",
+            "Analyze & create images",
+            "Apple Intelligence Image Playground"
+        ]
+    },
+    {
+        "id": "infinity",
+        "name": "Infinity",
+        "dailyMessageLimit": 20000,
+        "allowedModes": "all",
+        "features": [
+            "Unlimited access to all features",
+            "Maximum performance with no limits",
+            "All current & future modes",
+            "The complete Khione experience"
+        ]
+    }
 ]

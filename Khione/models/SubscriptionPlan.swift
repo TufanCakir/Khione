@@ -11,6 +11,6 @@ struct SubscriptionPlan: Identifiable, Decodable {
     let id: String
     let name: String
     let dailyMessageLimit: Int
-    let allowedModes: AllowedModes   // ✅ HIER FEHLTE ES
+    let allowedModes: AllowedModes  // ✅ HIER FEHLTE ES
     let features: [String]
 }

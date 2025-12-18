@@ -23,7 +23,8 @@ enum AllowedModes: Decodable {
         let container = try decoder.singleValueContainer()
 
         if let value = try? container.decode(String.self),
-           value.lowercased() == "all" {
+            value.lowercased() == "all"
+        {
             self = .all
         } else if let list = try? container.decode([String].self) {
             self = .list(list)
@@ -36,11 +37,10 @@ enum AllowedModes: Decodable {
     }
 }
 
-
 extension Bundle {
 
     func loadPlans(language: String) -> [SubscriptionPlan] {
-        let file = "plans_\(language)"   // plans_en / plans_de
+        let file = "plans_\(language)"  // plans_en / plans_de
 
         guard let url = url(forResource: file, withExtension: "json") else {
             fatalError("❌ Missing \(file).json in bundle")
@@ -57,4 +57,3 @@ extension Bundle {
         }
     }
 }
-

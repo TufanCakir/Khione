@@ -36,10 +36,12 @@ struct NoInternetView: View {
             Text("Keine Internetverbindung")
                 .font(.title3.weight(.semibold))
 
-            Text("""
-            Khione benötigt eine aktive Internetverbindung.
-            Bitte verbinde dich mit WLAN oder mobilen Daten.
-            """)
+            Text(
+                """
+                Khione benötigt eine aktive Internetverbindung.
+                Bitte verbinde dich mit WLAN oder mobilen Daten.
+                """
+            )
             .font(.footnote)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)

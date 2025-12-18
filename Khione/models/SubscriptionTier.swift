@@ -22,7 +22,6 @@ enum SubscriptionTier: String {
         }
     }
 
-
     var displayName: String {
         switch self {
         case .free: return "Free"
@@ -32,4 +31,3 @@ enum SubscriptionTier: String {
         }
     }
 }
-

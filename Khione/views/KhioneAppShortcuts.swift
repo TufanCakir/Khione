@@ -6,15 +6,16 @@ enum KhioneModeIntent: String, AppEnum {
     static var typeDisplayRepresentation =
         TypeDisplayRepresentation(name: "Khione Mode")
 
-    static var caseDisplayRepresentations: [KhioneModeIntent: DisplayRepresentation] = [
-        .chat: "Chat",
-        .tutor: "Tutor",
-        .writer: "Writer",
-        .decision: "Decision",
-        .polite: "Polite",
-        .strict: "Strict",
-        .accessibility: "Accessibility"
-    ]
+    static var caseDisplayRepresentations:
+        [KhioneModeIntent: DisplayRepresentation] = [
+            .chat: "Chat",
+            .tutor: "Tutor",
+            .writer: "Writer",
+            .decision: "Decision",
+            .polite: "Polite",
+            .strict: "Strict",
+            .accessibility: "Accessibility",
+        ]
 }
 
 struct OpenKhioneIntent: AppIntent {

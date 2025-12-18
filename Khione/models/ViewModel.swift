@@ -1,7 +1,7 @@
+internal import Combine
 import Foundation
 import FoundationModels
 import UIKit
-internal import Combine
 
 @MainActor
 final class ViewModel: ObservableObject {
@@ -11,7 +11,8 @@ final class ViewModel: ObservableObject {
     @Published private(set) var isProcessing = false
     @Published var errorMessage: String?
 
-    @Published private(set) var modes: [KhioneMode] = Bundle.main.loadKhioneModes()
+    @Published private(set) var modes: [KhioneMode] = Bundle.main
+        .loadKhioneModes()
     @Published private(set) var selectedMode: KhioneMode?
 
     // MARK: - Model
@@ -27,11 +28,12 @@ final class ViewModel: ObservableObject {
     // MARK: - Mode Handling
     func setMode(_ mode: KhioneMode) {
         selectedMode = mode
-        session = nil // reset context
+        session = nil  // reset context
     }
 
     func setModeByID(_ id: String) {
-        guard let mode = KhioneModeRegistry.all.first(where: { $0.id == id }) else {
+        guard let mode = KhioneModeRegistry.all.first(where: { $0.id == id })
+        else {
             return
         }
         setMode(mode)
@@ -102,34 +104,34 @@ final class ViewModel: ObservableObject {
     // MARK: - Prompt Builder
     private func buildPrompt(text: String, hasImage: Bool) -> String {
         var prompt = """
-        System:
-        \(currentSystemPrompt())
-        """
+            System:
+            \(currentSystemPrompt())
+            """
 
         if hasImage {
             prompt += """
 
-            IMPORTANT:
-            You cannot see images.
-            If the user asks about an image, clearly say this and ask for a description.
-            """
+                IMPORTANT:
+                You cannot see images.
+                If the user asks about an image, clearly say this and ask for a description.
+                """
         }
 
         prompt += """
 
-        User:
-        \(text.isEmpty ? "Hello!" : text)
-        """
+            User:
+            \(text.isEmpty ? "Hello!" : text)
+            """
 
         return prompt
     }
 
     private func currentSystemPrompt() -> String {
         let base = """
-        You are Khione, a high-quality AI assistant.
-        Always respond in the same language as the user.
-        Explain things clearly and naturally.
-        """
+            You are Khione, a high-quality AI assistant.
+            Always respond in the same language as the user.
+            Explain things clearly and naturally.
+            """
 
         return base + "\n\n" + (selectedMode?.systemPrompt ?? "")
     }

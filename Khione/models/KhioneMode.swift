@@ -28,7 +28,8 @@ extension Bundle {
 
     func loadKhioneModes() -> [KhioneMode] {
 
-        guard let url = url(forResource: "khione_modes", withExtension: "json") else {
+        guard let url = url(forResource: "khione_modes", withExtension: "json")
+        else {
             assertionFailure("❌ khione_modes.json not found")
             return KhioneMode.fallbackModes
         }

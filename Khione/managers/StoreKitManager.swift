@@ -3,8 +3,8 @@
 //  Khione
 //
 
-import StoreKit
 internal import Combine
+import StoreKit
 
 @MainActor
 final class StoreKitManager: ObservableObject {
@@ -17,7 +17,7 @@ final class StoreKitManager: ObservableObject {
     private let productIDs: [String] = [
         "khione.pro.monthly",
         "khione.vision.monthly",
-        "khione.infinity.monthly"
+        "khione.infinity.monthly",
     ]
 
     private var transactionTask: Task<Void, Never>?
@@ -103,4 +103,3 @@ final class StoreKitManager: ObservableObject {
         return product(for: id)
     }
 }
-

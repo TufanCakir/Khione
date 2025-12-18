@@ -8,21 +8,21 @@
 import SwiftUI
 
 struct KhioneInfoView: View {
-    
+
     @AppStorage("khione_language")
     private var language =
-    Locale.current.language.languageCode?.identifier ?? "en"
-    
+        Locale.current.language.languageCode?.identifier ?? "en"
+
     private var content: KhioneInfoContent {
         Bundle.main.loadKhioneInfo(language: language)
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                
+
                 header
-                
+
                 ForEach(content.sections) { section in
                     infoBlock(
                         title: section.title,
@@ -35,15 +35,15 @@ struct KhioneInfoView: View {
         .navigationTitle(content.title)
         .navigationBarTitleDisplayMode(.inline)
     }
-    
+
     private var header: some View {
         VStack(spacing: 12) {
             Image(systemName: "snowflake")
                 .font(.system(size: 44))
-            
+
             Text(content.title)
                 .font(.largeTitle.bold())
-            
+
             Text(content.subtitle)
                 .font(.callout)
                 .foregroundColor(.secondary)
@@ -51,7 +51,7 @@ struct KhioneInfoView: View {
         }
         .padding(.top)
     }
-    
+
     private func infoBlock(title: String, text: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.headline)

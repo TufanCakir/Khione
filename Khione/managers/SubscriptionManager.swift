@@ -3,9 +3,9 @@
 //  Khione
 //
 
-import SwiftUI
-import StoreKit
 internal import Combine
+import StoreKit
+import SwiftUI
 
 @MainActor
 final class SubscriptionManager: ObservableObject {
@@ -32,7 +32,8 @@ final class SubscriptionManager: ObservableObject {
     init(storeKit: StoreKitManager) {
         self.storeKit = storeKit
 
-        let lang = UserDefaults.standard.string(forKey: "khione_language") ?? "en"
+        let lang =
+            UserDefaults.standard.string(forKey: "khione_language") ?? "en"
         let loadedPlans = Bundle.main.loadPlans(language: lang)
 
         self.plans = loadedPlans
@@ -48,7 +49,6 @@ final class SubscriptionManager: ObservableObject {
         guard let productID = tier.productID else { return "—" }
         return storeKit.product(for: productID)?.displayPrice ?? "—"
     }
-
 
     // MARK: - StoreKit Sync
     func syncWithStoreKit() async {
@@ -67,7 +67,8 @@ final class SubscriptionManager: ObservableObject {
     func reloadPlans() {
         let loaded = Bundle.main.loadPlans(language: language)
         plans = loaded
-        plan = loaded.first { $0.id == tier.rawValue }
+        plan =
+            loaded.first { $0.id == tier.rawValue }
             ?? loaded.first { $0.id == "free" }!
     }
 
@@ -136,7 +137,10 @@ final class SubscriptionManager: ObservableObject {
     }
 
     private var lastConsumeDate: Date {
-        get { UserDefaults.standard.object(forKey: lastConsumeKey) as? Date ?? .distantPast }
+        get {
+            UserDefaults.standard.object(forKey: lastConsumeKey) as? Date
+                ?? .distantPast
+        }
         set { UserDefaults.standard.set(newValue, forKey: lastConsumeKey) }
     }
 

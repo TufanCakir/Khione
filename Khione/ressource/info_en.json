@@ -1,18 +1,21 @@
 {
-  "title": "Khione",
-  "subtitle": "A native AI experience for Apple platforms",
-  "sections": [
-    {
-      "title": "What is Khione?",
-      "text": "Khione is a high-quality AI assistant designed for clarity, creativity and productivity — deeply integrated with Apple technologies."
-    },
-    {
-      "title": "Powered by Apple",
-      "text": "Khione uses on-device Apple Intelligence, Siri integration and native SwiftUI performance for a fast and private experience."
-    },
-    {
-      "title": "Privacy First",
-      "text": "Your conversations stay on your device whenever possible. No tracking. No ads."
-    }
-  ]
+    "title": "Khione",
+    "subtitle": "A native AI experience for Apple platforms",
+    "sections": [
+        {
+            "title": "What is Khione?",
+            "text":
+                "Khione is a high-quality AI assistant designed for clarity, creativity and productivity — deeply integrated with Apple technologies."
+        },
+        {
+            "title": "Powered by Apple",
+            "text":
+                "Khione uses on-device Apple Intelligence, Siri integration and native SwiftUI performance for a fast and private experience."
+        },
+        {
+            "title": "Privacy First",
+            "text":
+                "Your conversations stay on your device whenever possible. No tracking. No ads."
+        }
+    ]
 }

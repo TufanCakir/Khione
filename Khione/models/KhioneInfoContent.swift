@@ -20,7 +20,7 @@ struct KhioneInfoSection: Decodable, Identifiable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = UUID() // 👈 lokal generiert
+        self.id = UUID()  // 👈 lokal generiert
         self.title = try container.decode(String.self, forKey: .title)
         self.text = try container.decode(String.self, forKey: .text)
     }
@@ -31,20 +31,18 @@ struct KhioneInfoSection: Decodable, Identifiable {
     }
 }
 
-
-
 extension Bundle {
     func loadKhioneInfo(language: String) -> KhioneInfoContent {
         let files = ["info_\(language)", "info_en"]
 
         for file in files {
-            if
-                let url = url(forResource: file, withExtension: "json"),
+            if let url = url(forResource: file, withExtension: "json"),
                 let data = try? Data(contentsOf: url),
                 let decoded = try? JSONDecoder().decode(
                     KhioneInfoContent.self,
                     from: data
-                ) {
+                )
+            {
                 return decoded
             }
         }

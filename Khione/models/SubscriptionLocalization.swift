@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 struct SubscriptionLocalization: Decodable {
 
     let title: String
@@ -43,18 +42,22 @@ extension SubscriptionLocalization {
         let f = SubscriptionLocalization.fallback
 
         title = try c.decodeIfPresent(String.self, forKey: .title) ?? f.title
-        subtitle = try c.decodeIfPresent(String.self, forKey: .subtitle) ?? f.subtitle
-        subscribe = try c.decodeIfPresent(String.self, forKey: .subscribe) ?? f.subscribe
-        restore = try c.decodeIfPresent(String.self, forKey: .restore) ?? f.restore
+        subtitle =
+            try c.decodeIfPresent(String.self, forKey: .subtitle) ?? f.subtitle
+        subscribe =
+            try c.decodeIfPresent(String.self, forKey: .subscribe)
+            ?? f.subscribe
+        restore =
+            try c.decodeIfPresent(String.self, forKey: .restore) ?? f.restore
         active = try c.decodeIfPresent(String.self, forKey: .active) ?? f.active
     }
 }
 
-
 extension Bundle {
 
     func loadSubscriptionLocalization(
-        language: String = Locale.current.language.languageCode?.identifier ?? "en",
+        language: String = Locale.current.language.languageCode?.identifier
+            ?? "en",
         fallback: String = "en"
     ) -> SubscriptionLocalization {
 
@@ -71,12 +74,17 @@ extension Bundle {
         return .fallback
     }
 
-    private func loadSubscriptionFile(_ language: String) -> SubscriptionLocalization? {
+    private func loadSubscriptionFile(_ language: String)
+        -> SubscriptionLocalization?
+    {
         let file = "subscription_\(language)"
         guard let url = url(forResource: file, withExtension: "json"),
-              let data = try? Data(contentsOf: url)
+            let data = try? Data(contentsOf: url)
         else { return nil }
 
-        return try? JSONDecoder().decode(SubscriptionLocalization.self, from: data)
+        return try? JSONDecoder().decode(
+            SubscriptionLocalization.self,
+            from: data
+        )
     }
 }
