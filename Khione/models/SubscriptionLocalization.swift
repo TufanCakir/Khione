@@ -14,6 +14,7 @@ struct SubscriptionLocalization: Decodable {
     let subscribe: String
     let restore: String
     let active: String
+    let included: String  // ✅ NEU
 
     enum CodingKeys: String, CodingKey {
         case title
@@ -21,6 +22,7 @@ struct SubscriptionLocalization: Decodable {
         case subscribe
         case restore
         case active
+        case included  // ✅
     }
 }
 
@@ -31,7 +33,8 @@ extension SubscriptionLocalization {
         subtitle: "Unlock advanced modes and features",
         subscribe: "Subscribe",
         restore: "Restore Purchases",
-        active: "Active"
+        active: "Active",
+        included: "Included"  // ✅
     )
 }
 
@@ -50,6 +53,8 @@ extension SubscriptionLocalization {
         restore =
             try c.decodeIfPresent(String.self, forKey: .restore) ?? f.restore
         active = try c.decodeIfPresent(String.self, forKey: .active) ?? f.active
+        included =
+            try c.decodeIfPresent(String.self, forKey: .included) ?? f.included
     }
 }
 

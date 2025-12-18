@@ -72,7 +72,7 @@ extension SubscriptionView {
     @ViewBuilder
     fileprivate func subscriptionCard(_ plan: SubscriptionPlan) -> some View {
         let tier = SubscriptionTier(rawValue: plan.id) ?? .free
-        let isActive = tier == subscription.tier
+        let state = cardState(for: tier)
         let product = subscription.product(for: tier)
 
         VStack(spacing: 14) {
@@ -104,11 +104,18 @@ extension SubscriptionView {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            if isActive {
+            switch state {
+            case .active:
                 Label(text.active, systemImage: "checkmark.seal.fill")
                     .foregroundColor(.green)
                     .padding(.top, 6)
-            } else {
+
+            case .included:
+                Label(text.included, systemImage: "checkmark.circle")
+                    .foregroundColor(.secondary)
+                    .padding(.top, 6)
+
+            case .available:
                 subscribeButton(for: tier)
             }
         }
@@ -117,7 +124,7 @@ extension SubscriptionView {
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .overlay(
             RoundedRectangle(cornerRadius: 18)
-                .stroke(isActive ? Color.accentColor : .clear, lineWidth: 2)
+                .stroke(state == .active ? Color.accentColor : .clear, lineWidth: 2)
         )
     }
 
@@ -130,7 +137,17 @@ extension SubscriptionView {
             Task { await purchase(tier) }
         }
         .buttonStyle(.borderedProminent)
-        .disabled(isPurchasing || tier.productID == nil)
+        .disabled(
+            isPurchasing ||
+            tier.productID == nil ||
+            subscription.tier >= tier
+        )
+    }
+
+    private func cardState(for tier: SubscriptionTier) -> SubscriptionCardState {
+        if tier == subscription.tier { return .active }
+        if subscription.tier > tier { return .included }
+        return .available
     }
 
     fileprivate var restoreButton: some View {
@@ -162,6 +179,12 @@ extension SubscriptionView {
             errorMessage = error.localizedDescription
         }
     }
+}
+
+private enum SubscriptionCardState {
+    case active
+    case included
+    case available
 }
 
 #Preview {

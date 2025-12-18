@@ -2,32 +2,61 @@
 //  SubscriptionTier.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
-//
 
 import Foundation
 
-enum SubscriptionTier: String {
+enum SubscriptionTier: String, CaseIterable, Comparable {
+
     case free
     case pro
     case vision
     case infinity
 
-    var productID: String? {
+    // MARK: - Rank (for comparison & UI logic)
+    var rank: Int {
         switch self {
-        case .pro: return "khione.pro.monthly"
-        case .vision: return "khione.vision.monthly"
-        case .infinity: return "khione.infinity.monthly"
-        default: return nil
+        case .free: return 0
+        case .pro: return 1
+        case .vision: return 2
+        case .infinity: return 3
         }
     }
 
-    var displayName: String {
+    // MARK: - Comparable
+    static func < (lhs: SubscriptionTier, rhs: SubscriptionTier) -> Bool {
+        lhs.rank < rhs.rank
+    }
+
+    // MARK: - StoreKit Product IDs
+    var productID: String? {
         switch self {
-        case .free: return "Free"
-        case .pro: return "Pro"
-        case .vision: return "Vision"
-        case .infinity: return "Infinity"
+        case .pro:
+            return "khione.pro.monthly"
+        case .vision:
+            return "khione.vision.monthly"
+        case .infinity:
+            return "khione.infinity.monthly"
+        case .free:
+            return nil
         }
+    }
+
+    // MARK: - Init from Product ID
+    init?(productID: String) {
+        switch productID {
+        case "khione.pro.monthly":
+            self = .pro
+        case "khione.vision.monthly":
+            self = .vision
+        case "khione.infinity.monthly":
+            self = .infinity
+        default:
+            return nil
+        }
+    }
+
+    // MARK: - Display
+    var displayName: String {
+        rawValue.capitalized
     }
 }
