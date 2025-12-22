@@ -38,9 +38,9 @@
             "refactor"
         ],
         "features": [
+            "Deutlich erweiterte tägliche Nutzung",
             "Erweiterte Analyse- & Denkfähigkeiten",
             "Programmieren, Debugging & Refactoring",
-            "Technische und produktive Workflows",
             "Für ambitionierte Nutzer & Entwickler"
         ]
     },
@@ -66,10 +66,10 @@
             "image"
         ],
         "features": [
+            "Sehr hohe tägliche Nutzung ohne Unterbrechung",
             "Bildgenerierung über Image Playground",
             "Bilder senden (Upload-Funktion)",
-            "Erweiterte kreative & technische Modi",
-            "Zugriff auf den Image-Modus"
+            "Erweiterte kreative & technische Modi"
         ]
     },
     {
@@ -78,8 +78,8 @@
         "dailyMessageLimit": 20000,
         "allowedModes": "all",
         "features": [
-            "Uneingeschränkter Zugriff auf alle Funktionen",
-            "Maximale Leistung ohne Limits",
+            "Uneingeschränkter Zugriff ohne tägliche Limits",
+            "Maximale Leistung für Power-User",
             "Alle aktuellen & zukünftigen Modi",
             "Das vollständige Khione-Erlebnis"
         ]

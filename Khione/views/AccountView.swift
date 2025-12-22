@@ -19,7 +19,6 @@ struct AccountView: View {
         Locale.current.language.languageCode?.identifier ?? "en"
 
     // MARK: - Links
-    private let tosURL = URL(string: "https://khione-tos.netlify.app/")!
     private let privacyURL = URL(string: "https://khione-privacy.netlify.app/")!
 
     // MARK: - Localization
@@ -226,10 +225,6 @@ extension AccountView {
             Label(Bundle.main.appVersionString, systemImage: "number")
                 .foregroundColor(.secondary)
             Label(text.builtWith, systemImage: "applelogo")
-
-            Link(destination: tosURL) {
-                Label(text.tos, systemImage: "doc.text")
-            }
 
             Link(destination: privacyURL) {
                 Label(text.privacy, systemImage: "hand.raised")

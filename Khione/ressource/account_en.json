@@ -2,20 +2,20 @@
     "title": "Account",
 
     "profile_name_placeholder": "Name",
-    "profile_local": "Local Profile",
+    "profile_local": "Local user profile",
 
     "language_section": "Language",
-    "language_picker": "Select Language",
+    "language_picker": "Select language",
     "language_de": "German",
     "language_en": "English",
 
     "subscription_section": "Subscription",
-    "current_plan": "Current Plan",
+    "current_plan": "Current plan",
     "upgrade": "Upgrade",
-    "manage_subscription": "Manage Subscription",
+    "manage_subscription": "Manage subscription",
     "active_subscription": "Active",
     "subscription_info":
-        "Subscriptions are billed monthly through the App Store and can be managed or canceled at any time in iOS settings.",
+        "Subscriptions are billed monthly through the App Store and can be managed or canceled at any time in the iOS settings.",
 
     "app_section": "App",
     "appearance": "Appearance",

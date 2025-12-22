@@ -1,7 +1,7 @@
 [
     {
         "id": "free",
-        "name": "Kostenlos",
+        "name": "Free",
         "dailyMessageLimit": 20,
         "allowedModes": [
             "chat",
@@ -15,8 +15,8 @@
         "features": [
             "Everyday conversations & creative writing",
             "Learning, writing & clear answers",
-            "Accessibility & voice input",
-            "Perfect for exploring Khione"
+            "Accessibility & voice input support",
+            "Perfect for trying out Khione"
         ]
     },
     {
@@ -38,10 +38,10 @@
             "refactor"
         ],
         "features": [
+            "Significantly extended daily usage",
             "Advanced analysis & reasoning capabilities",
             "Programming, debugging & refactoring",
-            "Technical and productive workflows",
-            "For ambitious users & developers"
+            "Built for ambitious users & developers"
         ]
     },
     {
@@ -66,10 +66,10 @@
             "image"
         ],
         "features": [
+            "Very high daily usage without interruptions",
             "Image generation via Image Playground",
             "Send images (upload support)",
-            "Advanced creative and technical modes",
-            "Access to the image mode"
+            "Advanced creative & technical modes"
         ]
     },
     {
@@ -78,9 +78,9 @@
         "dailyMessageLimit": 20000,
         "allowedModes": "all",
         "features": [
-            "Unlimited access to all features",
-            "Maximum performance with no limits",
-            "All current & future modes",
+            "Unlimited access without daily limits",
+            "Maximum performance for power users",
+            "All current & future modes included",
             "The complete Khione experience"
         ]
     }

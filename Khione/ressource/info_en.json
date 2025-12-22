@@ -5,17 +5,22 @@
         {
             "title": "What is Khione?",
             "text":
-                "Khione is a high-quality AI assistant designed for clarity, creativity, and productivity — built to support you in everyday tasks and idea development."
+                "Khione is a high-quality AI assistant designed for clarity, creativity, and productivity — built to support you effectively in everyday tasks and idea development."
         },
         {
-            "title": "Intelligent & efficient",
+            "title": "Smart & efficient",
             "text":
-                "Khione combines fast responses with a clean, modern interface for a smooth and enjoyable user experience."
+                "Khione combines fast responses with a clean, modern user interface for a smooth and enjoyable experience."
         },
         {
             "title": "Privacy first",
             "text":
-                "Your inputs are handled responsibly. Privacy and transparency are core principles of Khione."
+                "Your input is handled responsibly. Privacy and transparency are core principles of Khione."
+        },
+        {
+            "title": "Subscription",
+            "text":
+                "Khione offers optional subscriptions with extended features. A basic set of functionality is available for free. Subscriptions can be managed or canceled at any time in the iOS settings."
         }
     ]
 }
