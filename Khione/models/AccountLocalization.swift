@@ -23,6 +23,11 @@ struct AccountLocalization: Decodable {
     let manageSubscription: String
     let activeSubscription: String
     let subscriptionInfo: String
+    let upgradeAvailable: String  // ✅ DAS FEHLT
+    let planFree: String
+    let planPro: String
+    let planVision: String
+    let planInfinity: String
 
     let appSection: String
     let appearance: String
@@ -51,7 +56,11 @@ struct AccountLocalization: Decodable {
         case manageSubscription = "manage_subscription"
         case activeSubscription = "active_subscription"
         case subscriptionInfo = "subscription_info"
-
+        case upgradeAvailable = "upgrade_available"
+        case planFree = "plan_free"
+        case planPro = "plan_pro"
+        case planVision = "plan_vision"
+        case planInfinity = "plan_infinity"
         case appSection = "app_section"
         case appearance
 
@@ -118,6 +127,20 @@ extension AccountLocalization {
                 f.subscriptionInfo
             )
         }
+        upgradeAvailable =
+            try c.decodeIfPresent(String.self, forKey: .upgradeAvailable)
+            ?? f.upgradeAvailable
+
+        planFree =
+            try c.decodeIfPresent(String.self, forKey: .planFree) ?? f.planFree
+        planPro =
+            try c.decodeIfPresent(String.self, forKey: .planPro) ?? f.planPro
+        planVision =
+            try c.decodeIfPresent(String.self, forKey: .planVision)
+            ?? f.planVision
+        planInfinity =
+            try c.decodeIfPresent(String.self, forKey: .planInfinity)
+            ?? f.planInfinity
 
         appSection =
             try c.decodeIfPresent(String.self, forKey: .appSection)
@@ -160,6 +183,11 @@ extension AccountLocalization {
         activeSubscription: "Active",
         subscriptionInfo:
             "Abonnements werden monatlich über den App Store abgerechnet und können jederzeit in den iOS-Einstellungen verwaltet oder gekündigt werden.",
+        upgradeAvailable: "Upgrade available",  // ✅ FEHLTE
+        planFree: "Free",
+        planPro: "Pro",
+        planVision: "Vision",
+        planInfinity: "Infinity",
 
         appSection: "App",
         appearance: "Appearance",

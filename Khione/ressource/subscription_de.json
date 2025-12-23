@@ -4,5 +4,20 @@
     "subscribe": "Abonnieren",
     "restore": "Käufe wiederherstellen",
     "active": "Aktiv",
-    "included": "Inklusive"
+    "included": "Inklusive",
+
+    "plan_free": "Kostenlos",
+    "plan_pro": "Pro",
+    "plan_vision": "Vision",
+    "plan_infinity": "Infinity",
+
+    "daily": "Täglich",
+    "weekly": "Wöchentlich",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich",
+
+    "every_x_days": "Alle %d Tage",
+    "every_x_weeks": "Alle %d Wochen",
+    "every_x_months": "Alle %d Monate",
+    "every_x_years": "Alle %d Jahre"
 }

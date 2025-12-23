@@ -9,16 +9,29 @@ import StoreKit
 
 extension Product.SubscriptionPeriod {
 
-    var displayText: String {
+    func displayText(using text: SubscriptionLocalization) -> String {
         switch unit {
+
         case .day:
-            return value == 1 ? "Daily" : "Every \(value) days"
+            return value == 1
+                ? text.daily
+                : String(format: text.everyXDays, value)
+
         case .week:
-            return value == 1 ? "Weekly" : "Every \(value) weeks"
+            return value == 1
+                ? text.weekly
+                : String(format: text.everyXWeeks, value)
+
         case .month:
-            return value == 1 ? "Monthly" : "Every \(value) months"
+            return value == 1
+                ? text.monthly
+                : String(format: text.everyXMonths, value)
+
         case .year:
-            return value == 1 ? "Yearly" : "Every \(value) years"
+            return value == 1
+                ? text.yearly
+                : String(format: text.everyXYears, value)
+
         @unknown default:
             return ""
         }

@@ -16,6 +16,11 @@
     "active_subscription": "Aktiv",
     "subscription_info":
         "Abonnements werden monatlich über den App Store abgerechnet und können jederzeit in den iOS-Einstellungen verwaltet oder gekündigt werden.",
+    "upgrade_available": "Upgrade verfügbar",
+    "plan_free": "Kostenlos",
+    "plan_pro": "Pro",
+    "plan_vision": "Vision",
+    "plan_vision": "Infinity",
 
     "app_section": "App",
     "appearance": "Erscheinungsbild",
@@ -24,5 +29,5 @@
     "version": "Version",
     "built_with": "Erstellt mit Apple Foundation Models",
     "tos": "Nutzungsbedingungen",
-    "privacy": "Datenschutz"
+    "privacy": "Datenschutzerklärung"
 }

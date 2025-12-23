@@ -14,7 +14,24 @@ struct SubscriptionLocalization: Decodable {
     let subscribe: String
     let restore: String
     let active: String
-    let included: String  // ✅ NEU
+    let included: String
+
+    // ⏱ Periods
+    let daily: String
+    let weekly: String
+    let monthly: String
+    let yearly: String
+
+    let everyXDays: String
+    let everyXWeeks: String
+    let everyXMonths: String
+    let everyXYears: String
+
+    // Plans
+    let planFree: String
+    let planPro: String
+    let planVision: String
+    let planInfinity: String
 
     enum CodingKeys: String, CodingKey {
         case title
@@ -23,6 +40,20 @@ struct SubscriptionLocalization: Decodable {
         case restore
         case active
         case included  // ✅
+
+        case planFree = "plan_free"
+        case planPro = "plan_pro"
+        case planVision = "plan_vision"
+        case planInfinity = "plan_infinity"
+
+        case daily
+        case weekly
+        case monthly
+        case yearly
+        case everyXDays = "every_x_days"
+        case everyXWeeks = "every_x_weeks"
+        case everyXMonths = "every_x_months"
+        case everyXYears = "every_x_years"
     }
 }
 
@@ -34,7 +65,24 @@ extension SubscriptionLocalization {
         subscribe: "Subscribe",
         restore: "Restore Purchases",
         active: "Active",
-        included: "Included"  // ✅
+        included: "Included",
+
+        // ⏱ Periods
+        daily: "Daily",
+        weekly: "Weekly",
+        monthly: "Monthly",
+        yearly: "Yearly",
+
+        everyXDays: "Every %d days",
+        everyXWeeks: "Every %d weeks",
+        everyXMonths: "Every %d months",
+        everyXYears: "Every %d years",
+
+        // Plans
+        planFree: "Free",
+        planPro: "Pro",
+        planVision: "Vision",
+        planInfinity: "Infinity"
     )
 }
 
@@ -55,6 +103,39 @@ extension SubscriptionLocalization {
         active = try c.decodeIfPresent(String.self, forKey: .active) ?? f.active
         included =
             try c.decodeIfPresent(String.self, forKey: .included) ?? f.included
+
+        daily =
+            try c.decodeIfPresent(String.self, forKey: .daily) ?? f.daily
+        weekly =
+            try c.decodeIfPresent(String.self, forKey: .weekly) ?? f.weekly
+        monthly =
+            try c.decodeIfPresent(String.self, forKey: .monthly) ?? f.monthly
+        yearly =
+            try c.decodeIfPresent(String.self, forKey: .yearly) ?? f.yearly
+
+        everyXDays =
+            try c.decodeIfPresent(String.self, forKey: .everyXDays)
+            ?? f.everyXDays
+        everyXWeeks =
+            try c.decodeIfPresent(String.self, forKey: .everyXWeeks)
+            ?? f.everyXWeeks
+        everyXMonths =
+            try c.decodeIfPresent(String.self, forKey: .everyXMonths)
+            ?? f.everyXMonths
+        everyXYears =
+            try c.decodeIfPresent(String.self, forKey: .everyXYears)
+            ?? f.everyXYears
+
+        planFree =
+            try c.decodeIfPresent(String.self, forKey: .planFree) ?? f.planFree
+        planPro =
+            try c.decodeIfPresent(String.self, forKey: .planPro) ?? f.planPro
+        planVision =
+            try c.decodeIfPresent(String.self, forKey: .planVision)
+            ?? f.planVision
+        planInfinity =
+            try c.decodeIfPresent(String.self, forKey: .planInfinity)
+            ?? f.planInfinity
     }
 }
 

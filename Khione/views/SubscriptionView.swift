@@ -17,7 +17,13 @@ struct SubscriptionView: View {
     @State private var isPurchasing = false
     @State private var errorMessage: String?
 
-    private let text = Bundle.main.loadSubscriptionLocalization()
+    @AppStorage("khione_language")
+    private var language =
+        Locale.current.language.languageCode?.identifier ?? "en"
+
+    private var text: SubscriptionLocalization {
+        Bundle.main.loadSubscriptionLocalization(language: language)
+    }
 
     var body: some View {
         ScrollView {
@@ -69,6 +75,15 @@ extension SubscriptionView {
         }
     }
 
+    private func localizedPlanName(for tier: SubscriptionTier) -> String {
+        switch tier {
+        case .free: return text.planFree
+        case .pro: return text.planPro
+        case .vision: return text.planVision
+        case .infinity: return text.planInfinity
+        }
+    }
+
     @ViewBuilder
     fileprivate func subscriptionCard(_ plan: SubscriptionPlan) -> some View {
         let tier = SubscriptionTier(rawValue: plan.id) ?? .free
@@ -86,16 +101,12 @@ extension SubscriptionView {
                         .font(.headline)
 
                     if let period = product.subscription?.subscriptionPeriod {
-                        Text(period.displayText)
+                        Text(period.displayText(using: text))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
-            } else {
-                Text("Free")
-                    .foregroundColor(.secondary)
             }
-
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(plan.features, id: \.self) {
                     Text("• \($0)")
@@ -124,7 +135,10 @@ extension SubscriptionView {
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .overlay(
             RoundedRectangle(cornerRadius: 18)
-                .stroke(state == .active ? Color.accentColor : .clear, lineWidth: 2)
+                .stroke(
+                    state == .active ? Color.accentColor : .clear,
+                    lineWidth: 2
+                )
         )
     }
 
@@ -138,13 +152,12 @@ extension SubscriptionView {
         }
         .buttonStyle(.borderedProminent)
         .disabled(
-            isPurchasing ||
-            tier.productID == nil ||
-            subscription.tier >= tier
+            isPurchasing || tier.productID == nil || subscription.tier >= tier
         )
     }
 
-    private func cardState(for tier: SubscriptionTier) -> SubscriptionCardState {
+    private func cardState(for tier: SubscriptionTier) -> SubscriptionCardState
+    {
         if tier == subscription.tier { return .active }
         if subscription.tier > tier { return .included }
         return .available

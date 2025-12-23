@@ -20,6 +20,10 @@ struct AccountView: View {
 
     // MARK: - Links
     private let privacyURL = URL(string: "https://khione-privacy.netlify.app/")!
+    private let eulaURL = URL(
+        string:
+            "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+    )!
 
     // MARK: - Localization
     private var text: AccountLocalization {
@@ -154,15 +158,30 @@ extension AccountView {
 
 extension AccountView {
 
+    var localizedPlanName: String {
+        switch subscription.tier {
+        case .free: return text.planFree
+        case .pro: return text.planPro
+        case .vision: return text.planVision
+        case .infinity: return text.planInfinity
+        }
+    }
+
     @ViewBuilder
     fileprivate var planBadge: some View {
         switch subscription.tier {
+
         case .free:
             VStack(alignment: .trailing, spacing: 2) {
-                Text("Free").badgeStyle()
-                Label("Upgrade available", systemImage: "arrow.up.circle")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                Text(localizedPlanName).badgeStyle()
+                    .badgeStyle()
+
+                Label(
+                    text.upgradeAvailable,
+                    systemImage: "arrow.up.circle"
+                )
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
 
         default:
@@ -172,13 +191,17 @@ extension AccountView {
         }
     }
 
+    private var subscriptionText: SubscriptionLocalization {
+        Bundle.main.loadSubscriptionLocalization(language: language)
+    }
+
     fileprivate func priceBadge(_ product: Product) -> some View {
         VStack(alignment: .trailing, spacing: 2) {
             Text(product.displayPrice)
                 .font(.caption.bold())
 
             if let period = product.subscription?.subscriptionPeriod {
-                Text(period.displayText)
+                Text(period.displayText(using: subscriptionText))
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -216,6 +239,7 @@ extension AccountView {
 
     fileprivate var aboutSection: some View {
         Section(text.aboutSection) {
+
             NavigationLink {
                 KhioneInfoView()
             } label: {
@@ -224,10 +248,16 @@ extension AccountView {
 
             Label(Bundle.main.appVersionString, systemImage: "number")
                 .foregroundColor(.secondary)
+
             Label(text.builtWith, systemImage: "applelogo")
 
             Link(destination: privacyURL) {
                 Label(text.privacy, systemImage: "hand.raised")
+            }
+
+            // ✅ NEU: Apple EULA
+            Link(destination: eulaURL) {
+                Label(text.tos, systemImage: "doc.text")
             }
         }
     }

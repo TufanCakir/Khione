@@ -15,7 +15,12 @@
     "manage_subscription": "Manage subscription",
     "active_subscription": "Active",
     "subscription_info":
-        "Subscriptions are billed monthly through the App Store and can be managed or canceled at any time in the iOS settings.",
+        "Subscriptions are billed monthly through the App Store and can be managed or canceled at any time in iOS Settings.",
+    "upgrade_available": "Upgrade available",
+    "plan_free": "Free",
+    "plan_pro": "Pro",
+    "plan_vision": "Vision",
+    "plan_vision": "Infinity",
 
     "app_section": "App",
     "appearance": "Appearance",
