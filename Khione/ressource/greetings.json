@@ -1,0 +1,21 @@
+[
+    {
+        "id": "E12A4B9A-1123-44E7-A49F-11D9913A0A11",
+        "text": "Good morning",
+        "sfSymbol": "sun.max.fill",
+        "fromHour": 5,
+        "toHour": 11
+    },
+    {
+        "id": "D7B21743-4C10-4C5A-8898-48E8E3B4E019",
+        "text": "Good evening",
+        "sfSymbol": "moon.stars.fill",
+        "fromHour": 18,
+        "toHour": 23
+    },
+    {
+        "id": "A52F4B38-0F32-4A18-9E42-BBD63A5F95C7",
+        "text": "Hi there",
+        "sfSymbol": "hand.wave.fill"
+    }
+]

@@ -24,6 +24,7 @@ final class SubscriptionManager: ObservableObject {
     private let remainingKey = "remainingMessagesToday"
     private let lastConsumeKey = "lastMessageConsumeDate"
     private let initializedKey = "freeTierInitialized"
+    private let refillAnchorKey = "refillAnchorDate"
 
     @AppStorage("khione_language")
     private var language: String = "en"
@@ -44,6 +45,17 @@ final class SubscriptionManager: ObservableObject {
 
         Task { await syncWithStoreKit() }
     }
+
+    private var refillAnchor: Date {
+        get {
+            UserDefaults.standard.object(forKey: refillAnchorKey) as? Date
+                ?? Date()
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: refillAnchorKey)
+        }
+    }
+
     // MARK: - Pricing
     func price(for tier: SubscriptionTier) -> String {
         guard let productID = tier.productID else { return "—" }
@@ -79,13 +91,11 @@ final class SubscriptionManager: ObservableObject {
 
     func consumeMessageIfNeeded() {
         guard tier == .free else { return }
-
         refillMessagesIfNeeded()
         guard remainingMessagesToday > 0 else { return }
 
         remainingMessagesToday -= 1
         storedRemainingMessages = remainingMessagesToday
-        lastConsumeDate = Date()
     }
 
     var dailyMessageLimit: Int {
@@ -109,10 +119,10 @@ final class SubscriptionManager: ObservableObject {
     private func refillMessagesIfNeeded() {
         guard tier == .free else { return }
 
-        let elapsed = Date().timeIntervalSince(lastConsumeDate)
-        guard elapsed >= refillInterval else { return }
-
+        let now = Date()
+        let elapsed = now.timeIntervalSince(refillAnchor)
         let refillCount = Int(elapsed / refillInterval)
+
         guard refillCount > 0 else { return }
 
         remainingMessagesToday = min(
@@ -120,14 +130,15 @@ final class SubscriptionManager: ObservableObject {
             dailyMessageLimit
         )
 
-        storedRemainingMessages = remainingMessagesToday
-        lastConsumeDate = lastConsumeDate.addingTimeInterval(
+        refillAnchor = refillAnchor.addingTimeInterval(
             TimeInterval(refillCount) * refillInterval
         )
+
+        storedRemainingMessages = remainingMessagesToday
     }
 
     var nextRefillDate: Date {
-        lastConsumeDate.addingTimeInterval(refillInterval)
+        refillAnchor.addingTimeInterval(refillInterval)
     }
 
     // MARK: - Persistence Helpers

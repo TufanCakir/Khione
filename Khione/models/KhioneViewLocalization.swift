@@ -17,6 +17,10 @@ struct KhioneViewLocalization: Decodable {
     let nextMessageIn: String
     let visionLocked: String
 
+    // 🧊 Greeting
+    let welcomeNoName: String
+    let welcomeWithName: String
+
     enum CodingKeys: String, CodingKey {
         case thinking
         case messagePlaceholder = "message_placeholder"
@@ -25,9 +29,10 @@ struct KhioneViewLocalization: Decodable {
         case messagesAvailable = "messages_available"
         case nextMessageIn = "next_message_in"
         case visionLocked = "vision_locked"
+        case welcomeNoName = "welcome_no_name"
+        case welcomeWithName = "welcome_with_name"
     }
 }
-
 
 extension KhioneViewLocalization {
 
@@ -38,16 +43,17 @@ extension KhioneViewLocalization {
         openImagePlayground: "Open Image Playground",
         messagesAvailable: "Messages available",
         nextMessageIn: "Next message in %@",
-        visionLocked: "Vision"
+        visionLocked: "Vision",
+        welcomeNoName: "Welcome to Khione",
+        welcomeWithName: "Welcome, %@"
     )
 }
-
-
 
 extension Bundle {
 
     func loadKhioneViewLocalization(
-        language: String = Locale.current.language.languageCode?.identifier ?? "en",
+        language: String = Locale.current.language.languageCode?.identifier
+            ?? "en",
         fallback: String = "en"
     ) -> KhioneViewLocalization {
 
@@ -79,4 +85,3 @@ extension Bundle {
         )
     }
 }
-

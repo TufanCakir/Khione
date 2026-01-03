@@ -14,6 +14,7 @@ struct KhioneView: View {
     // MARK: - State & Environment
     @StateObject private var viewModel = ViewModel()
     @StateObject private var speech = SpeechRecognizer()
+    @ObservedObject var chatStore: ChatStore
 
     @EnvironmentObject private var subscription: SubscriptionManager
     @EnvironmentObject private var themeManager: ThemeManager
@@ -27,6 +28,7 @@ struct KhioneView: View {
     @State private var showImagePlayground = false
 
     @FocusState private var isInputFocused: Bool
+    @AppStorage("khione_username") private var username = ""
 
     @AppStorage("khione_language")
     private var language =
@@ -45,50 +47,41 @@ struct KhioneView: View {
         guard !viewModel.isProcessing,
             let mode = viewModel.selectedMode
         else { return false }
-
-        if mode.id == "image" {
-            return true
-        }
-
-        return
-            !inputText
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if mode.id == "image" { return true }
+        return !inputText.trimmingCharacters(in: .whitespacesAndNewlines)
             .isEmpty
+    }
+
+    private var showInlineLimitHint: Bool {
+        subscription.tier == .free && subscription.remainingMessagesToday == 0
+            && !viewModel.isProcessing
     }
 
     // MARK: - Body
     var body: some View {
         ZStack {
-            themeManager.backgroundColor
-                .ignoresSafeArea()
+            themeManager.backgroundColor.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                messagesList
+                messagesArea
                 attachmentPreview
-                statusHintBar
-                    .padding(.bottom, 2)
-
             }
             .contentShape(Rectangle())
-            .onTapGesture {
-                dismissInput()
-            }
-
+            .onTapGesture { dismissInput() }
             .safeAreaInset(edge: .bottom) {
                 footerBar
                     .background(.ultraThinMaterial)
-                    .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .padding(.horizontal)
-                    .padding(.bottom, 6)
+                    .padding()
             }
+            .animation(
+                .spring(response: 0.3, dampingFraction: 0.8),
+                value: canSend
+            )
         }
         .toolbar { toolbarContent }
-        .imagePlaygroundSheet(
-            isPresented: $showImagePlayground
-        ) { url in
+        .imagePlaygroundSheet(isPresented: $showImagePlayground) { url in
             print("Image Playground result:", url)
-            // z.B. speichern, analysieren, anzeigen
         }
         .sheet(isPresented: $showImagePicker) {
             if subscription.canUseVision {
@@ -96,19 +89,15 @@ struct KhioneView: View {
             }
         }
         .onChange(of: speech.transcript) { _, newValue in
-            if speech.isRecording {
-                inputText = newValue
-            }
+            if speech.isRecording { inputText = newValue }
         }
         .onAppear {
-            // Set a default mode if none is selected
-            if viewModel.selectedMode == nil {
-                if let first = KhioneModeRegistry.all.first {
-                    viewModel.setMode(first)
-                }
+            if viewModel.selectedMode == nil,
+                let first = KhioneModeRegistry.all.first
+            {
+                viewModel.setMode(first)
             }
 
-            // Apply start mode from UserDefaults once, if present
             if let modeID = UserDefaults.standard.string(
                 forKey: "khione_start_mode"
             ) {
@@ -116,16 +105,26 @@ struct KhioneView: View {
                 UserDefaults.standard.removeObject(forKey: "khione_start_mode")
             }
         }
-        .onDisappear {
-            dismissInput(animated: false)
-        }
+        .onDisappear { dismissInput(animated: false) }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                isInputFocused = false
-            }
+            if newPhase == .active { isInputFocused = false }
         }
         .sheet(isPresented: $showUpgradeSheet) {
             SubscriptionView()
+        }
+        .onChange(of: chatStore.activeID) { _, _ in
+            viewModel.reset()
+            viewModel.loadMessages(chatStore.activeChat?.messages ?? [])
+        }
+        .onChange(of: inputText) { _, newValue in
+            withAnimation {
+                viewModel.removeGreetingIfNeeded()
+            }
+        }
+        .onAppear {
+            viewModel.onMessagesChanged = { newMessages in
+                chatStore.update(messages: newMessages)
+            }
         }
     }
 
@@ -143,21 +142,35 @@ struct KhioneView: View {
                     }
                 } label: {
                     HStack(alignment: .bottom, spacing: 10) {
-                        Text(viewModel.selectedMode?.name ?? "Khione")
-                            .font(.headline)
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
+                        Text(viewModel.selectedMode?.name ?? "Khione").font(
+                            .headline
+                        )
+                        Image(systemName: "chevron.down").font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    AccountView()
+                Button {
+                    chatStore.createNewChat()
+                    viewModel.reset()
+                    inputText = ""
                 } label: {
-                    Image(systemName: "person.crop.circle")
+                    Image(systemName: "plus")
                 }
+            }
+        }
+    }
+
+    // Combines the messages list with an overlayed greeting when appropriate
+    private var messagesArea: some View {
+        ZStack {
+            messagesList
+
+            if viewModel.messages.isEmpty && !isInputFocused {
+                centerGreeting
+                    .transition(.opacity.combined(with: .scale))
             }
         }
     }
@@ -168,14 +181,11 @@ struct KhioneView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(viewModel.messages) { message in
-                        ChatBubbleView(message: message)
-                            .id(message.id)
+                        ChatBubbleView(message: message).id(message.id)
                     }
 
                     if viewModel.isProcessing {
-                        ProgressView(text.thinking)
-                            .padding(.top)
-                            .id("typing")
+                        ProgressView(text.thinking).padding(.top).id("typing")
                     }
                 }
                 .padding(.vertical)
@@ -187,57 +197,164 @@ struct KhioneView: View {
                 scrollToBottom(proxy)
             }
         }
-        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var currentGreeting: Greeting {
+        let greetings = Bundle.main.loadGreetings()
+        return greetings.first(where: { $0.isValidNow() })
+            ?? Greeting.fallback()
+    }
+
+    private var centerGreeting: some View {
+        let clean = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        let greeting = currentGreeting
+
+        let title =
+            clean.isEmpty
+            ? greeting.text
+            : String(format: text.welcomeWithName, clean)
+
+        return VStack(spacing: 16) {
+
+            Image(systemName: greeting.sfSymbol ?? "snowflake")
+                .symbolRenderingMode(.hierarchical)
+                .font(.system(size: 52, weight: .light))
+                .foregroundStyle(themeManager.accentColor)
+                .shadow(
+                    color: themeManager.accentColor.opacity(0.35),
+                    radius: 14
+                )
+                .transition(.scale.combined(with: .opacity))
+
+            Text(title)
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 40)
+        }
+        .padding(.vertical, 40)
     }
 
     // MARK: - Footer Switch
     @ViewBuilder
     private var footerBar: some View {
-        if isImageMode {
-            imageFooter
-        } else {
-            chatFooter
-        }
+        isImageMode ? AnyView(imageFooter) : AnyView(chatFooter)
     }
 
     @ViewBuilder
     private var actionButton: some View {
         if viewModel.isProcessing {
             stopButton
-        } else {
+        } else if canSend {
             sendButton
+                .transition(.scale.combined(with: .opacity))
         }
     }
 
     // MARK: - Chat Footer
     private var chatFooter: some View {
-        HStack(alignment: .bottom, spacing: 10) {
+        VStack(spacing: 8) {
 
-            attachmentButton
-            speechButton
+            // INPUT ROW
+            HStack(alignment: .bottom, spacing: 8) {
 
-            TextField(
-                text.messagePlaceholder,
-                text: $inputText,
-                axis: .vertical
-            )
-            .focused($isInputFocused)
-            .lineLimit(1...4)
-            .padding(10)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            actionButton
+                TextField(
+                    text.messagePlaceholder,
+                    text: $inputText,
+                    axis: .vertical
+                )
+                .focused($isInputFocused)
+                .lineLimit(1...4)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(.white.opacity(0.06))
+                )
+                .opacity(showInlineLimitHint ? 0.35 : 1)
+                .disabled(showInlineLimitHint)
+
+                actionButton
+            }
+
+            // TOOL ROW
+            HStack(spacing: 18) {
+                attachmentButton
+                replyStyleButton
+                speechButton
+                Spacer()
+            }
+            .padding(.horizontal, 6)
+
+            // LIMIT HINT
+            if showInlineLimitHint {
+                inlineLimitHint
+                    .font(.footnote)
+                    .padding(.horizontal, 8)
+            }
         }
+        .padding(.vertical, 10)
         .padding(.horizontal)
-        .padding(.vertical, 8)
         .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func iconButton(_ system: String) -> some View {
+        Image(systemName: system)
+            .symbolRenderingMode(.hierarchical)
+            .font(.title3)
+            .foregroundStyle(themeManager.accentColor)  // ← 💎 Theme hier!
+            .frame(width: 36, height: 36)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var replyStyleButton: some View {
+        Menu {
+            ForEach(viewModel.replyStyles) { style in
+                Button {
+                    viewModel.selectedReplyStyle = style
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: style.icon)
+                            .foregroundStyle(
+                                viewModel.selectedReplyStyle?.id == style.id
+                                    ? themeManager.accentColor
+                                    : .secondary
+                            )
+
+                        Text(style.name)
+                    }
+                }
+            }
+        } label: {
+            iconButton(viewModel.selectedReplyStyle?.icon ?? "wand.and.stars")
+        }
+    }
+
+    private var inlineLimitHint: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let remaining = max(
+                subscription.nextRefillDate.timeIntervalSince(context.date),
+                0
+            )
+            Text(String(format: text.nextMessageIn, formatInline(remaining)))
+                .font(.footnote.weight(.medium))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private func formatInline(_ interval: TimeInterval) -> String {
+        let m = Int(interval) / 60
+        let s = Int(interval) % 60
+        return String(format: "%02dm %02ds", m, s)
     }
 
     private func dismissInput(animated: Bool = true) {
         if animated {
-            withAnimation(.easeOut(duration: 0.2)) {
-                isInputFocused = false
-            }
+            withAnimation(.easeOut(duration: 0.2)) { isInputFocused = false }
         } else {
             isInputFocused = false
         }
@@ -250,7 +367,6 @@ struct KhioneView: View {
     // MARK: - Image Footer
     private var imageFooter: some View {
         VStack(spacing: 16) {
-
             VStack(spacing: 12) {
                 Image(systemName: "photo.artframe")
                     .font(.system(size: 44))
@@ -259,8 +375,6 @@ struct KhioneView: View {
                 Text(text.imageInfo)
                     .font(.footnote)
                     .foregroundColor(.secondary)
-
-                
             }
 
             Button {
@@ -268,26 +382,26 @@ struct KhioneView: View {
                 dismissInput()
                 showImagePlayground = true
             } label: {
-                Label(text.openImagePlayground, systemImage: "photo.artframe")
-                    .frame(maxWidth: .infinity)
+                Label(
+                    text.openImagePlayground,
+                    systemImage: "apple.image.playground"
+                )
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
         }
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 18))
-        .padding(.horizontal)
-        .padding(.bottom, 6)
+        .padding()
     }
 
     // MARK: - Buttons
     private var attachmentButton: some View {
         Button {
             subscription.canUseVision
-                ? (showImagePicker = true)
-                : (showUpgradeSheet = true)
+                ? (showImagePicker = true) : (showUpgradeSheet = true)
         } label: {
-            Image(systemName: "plus")
-                .font(.title3)
+            iconButton("plus")
         }
         .disabled(!subscription.canUseVision)
         .opacity(subscription.canUseVision ? 1 : 0.35)
@@ -295,9 +409,10 @@ struct KhioneView: View {
 
     private var sendButton: some View {
         Button(action: handleSend) {
-            Image(systemName: "paperplane.fill")
+            Image(systemName: "arrow.up")
                 .font(.title3)
                 .frame(width: 36, height: 36)
+
         }
         .buttonStyle(.borderedProminent)
         .disabled(!canSend)
@@ -328,12 +443,8 @@ struct KhioneView: View {
                 }
             }
         } label: {
-            Image(systemName: speech.isRecording ? "stop.fill" : "mic.fill")
-                .font(.title3)
+            iconButton(speech.isRecording ? "stop.fill" : "mic.fill")
                 .foregroundStyle(speech.isRecording ? .red : .primary)
-                .padding(8)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .animatedRainbowBorder(
             active: speech.isRecording,
@@ -341,9 +452,7 @@ struct KhioneView: View {
             radius: 14
         )
         .onChange(of: viewModel.selectedMode?.id) { _, _ in
-            if speech.isRecording {
-                speech.stop()
-            }
+            if speech.isRecording { speech.stop() }
         }
     }
 
@@ -374,38 +483,6 @@ struct KhioneView: View {
         }
     }
 
-    // MARK: - Status Hint
-    @ViewBuilder
-    private var statusHintBar: some View {
-        if subscription.tier == .free
-            && (isInputFocused || subscription.remainingMessagesToday == 0)
-        {
-
-            HStack {
-                if subscription.remainingMessagesToday > 0 {
-                    Text("\(subscription.remainingMessagesToday)")
-                        .font(.caption.bold())
-                    Text(text.messagesAvailable)                        .font(.caption)
-                        .foregroundColor(.secondary)
-                } else {
-                    RefillCountdownView(
-                        nextRefillDate: subscription.nextRefillDate,
-                        localizedTemplate: text.nextMessageIn
-                    )
-                }
-
-                Spacer()
-
-                Label("Vision", systemImage: "lock.fill")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 6)
-            .background(.ultraThinMaterial)
-        }
-    }
-
     // MARK: - Logic
     private func handleSend() {
         guard let mode = viewModel.selectedMode else { return }
@@ -426,6 +503,14 @@ struct KhioneView: View {
         viewModel.send(text: inputText, image: selectedImage)
         subscription.consumeMessageIfNeeded()
 
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            chatStore.update(messages: viewModel.messages)
+        }
+
+        if chatStore.activeChat?.title == "New Chat" {
+            chatStore.renameActiveChat(to: String(inputText.prefix(32)))
+        }
+
         inputText = ""
         selectedImage = nil
     }
@@ -439,6 +524,8 @@ struct KhioneView: View {
     }
 }
 
+// MARK: - RefillCountdownView
+
 struct RefillCountdownView: View {
     let nextRefillDate: Date
     let localizedTemplate: String
@@ -449,7 +536,6 @@ struct RefillCountdownView: View {
                 nextRefillDate.timeIntervalSince(context.date),
                 0
             )
-
             Text(String(format: localizedTemplate, format(remaining)))
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -482,11 +568,9 @@ extension UIApplication {
 }
 
 #Preview {
-    NavigationStack {
-        KhioneView()
-            .environmentObject(StoreKitManager())
-            .environmentObject(SubscriptionManager(storeKit: StoreKitManager()))
-            .environmentObject(ThemeManager())
+    KhionePreviewRoot {
+        NavigationStack {
+            KhioneView(chatStore: ChatStore())
+        }
     }
 }
-

@@ -8,7 +8,8 @@ import SwiftUI
 @main
 struct KhioneApp: App {
 
-    // MARK: - Global State
+    @Environment(\.scenePhase) private var scenePhase
+
     @StateObject private var storeKit: StoreKitManager
     @StateObject private var subscription: SubscriptionManager
     @StateObject private var themeManager: ThemeManager
@@ -17,42 +18,43 @@ struct KhioneApp: App {
     @AppStorage("hasSeenOnboarding")
     private var hasSeenOnboarding = false
 
-    // MARK: - Init
     init() {
-        let storeKitManager = StoreKitManager()
+        let sk = StoreKitManager()
 
-        _storeKit = StateObject(wrappedValue: storeKitManager)
+        _storeKit = StateObject(wrappedValue: sk)
         _subscription = StateObject(
-            wrappedValue: SubscriptionManager(storeKit: storeKitManager)
+            wrappedValue: SubscriptionManager(storeKit: sk)
         )
         _themeManager = StateObject(wrappedValue: ThemeManager())
         _internet = StateObject(wrappedValue: InternetMonitor())
     }
 
-    // MARK: - Scene
     var body: some Scene {
         WindowGroup {
-            Group {
-                if hasSeenOnboarding {
-                    RootView()
-                } else {
-                    OnboardingView {
-                        hasSeenOnboarding = true
-                    }
+            rootContent
+                .environmentObject(storeKit)
+                .environmentObject(subscription)
+                .environmentObject(themeManager)
+                .environmentObject(internet)
+                .preferredColorScheme(themeManager.colorScheme)
+                .tint(themeManager.accentColor)
+        }
+    }
+
+    @ViewBuilder
+    private var rootContent: some View {
+        Group {
+            if hasSeenOnboarding {
+                RootView()
+            } else {
+                OnboardingView {
+                    hasSeenOnboarding = true
                 }
             }
-            // ✅ ENV FÜR ALLE
-            .environmentObject(storeKit)
-            .environmentObject(subscription)
-            .environmentObject(themeManager)
-            .environmentObject(internet)
-
-            // ✅ THEME GLOBAL
-            .preferredColorScheme(themeManager.colorScheme)
-            .tint(themeManager.accentColor)
-
-            .onAppear {
-                print("🧾 Active tier:", subscription.tier)
+        }
+        .onChange(of: scenePhase) { oldValue, newValue in
+            if newValue == .background {
+                GreetingManager.resetSession()
             }
         }
     }

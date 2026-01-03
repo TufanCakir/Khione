@@ -99,8 +99,7 @@ extension AppearanceView {
 }
 
 #Preview {
-    NavigationStack {
+    KhionePreviewRoot {
         AppearanceView()
-            .environmentObject(ThemeManager())
     }
 }

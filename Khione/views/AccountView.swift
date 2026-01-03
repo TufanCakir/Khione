@@ -298,12 +298,9 @@ extension Bundle {
 }
 
 #Preview {
-    let storeKit = StoreKitManager()
-    let subscription = SubscriptionManager(storeKit: storeKit)
-
-    NavigationStack {
-        AccountView()
-            .environmentObject(ThemeManager())
-            .environmentObject(subscription)
+    KhionePreviewRoot {
+        NavigationStack {
+            AccountView()
+        }
     }
 }

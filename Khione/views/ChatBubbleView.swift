@@ -32,6 +32,26 @@ struct ChatBubbleView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
 
+            // ✨ Emoji / Symbol Header
+            if message.emoji != nil || message.leadingSymbol != nil {
+                HStack(spacing: 6) {
+                    if let emoji = message.emoji {
+                        Text(emoji)
+                            .font(.title3)
+                    }
+
+                    if let symbol = message.leadingSymbol {
+                        Image(systemName: symbol)
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            if message.kind == .greeting {
+                TypingGreetingView(text: message.text ?? "")
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+
             // 💻 Code Block
             if message.isCode {
                 CodeBlockView(

@@ -7,28 +7,36 @@ import SwiftUI
 
 struct RootView: View {
 
+    @StateObject private var chatStore = ChatStore()
     @EnvironmentObject private var internet: InternetMonitor
 
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                content
-            }
-            .animation(
-                .easeInOut(duration: 0.25),
-                value: internet.isConnected
-            )
-        }
-    }
+    @State private var selectedTab = 0  // 👈 NEU
 
-    @ViewBuilder
-    private var content: some View {
-        if internet.isConnected {
-            KhioneView()
-                .transition(.opacity)
-        } else {
-            NoInternetView()
-                .transition(.opacity)
+    var body: some View {
+        TabView(selection: $selectedTab) {
+
+            ChatRouter(store: chatStore)
+                .tabItem {
+                    Label(
+                        "Chat",
+                        systemImage: "bubble.left.and.bubble.right.fill"
+                    )
+                }
+                .tag(0)
+
+            KhioneSidebar(
+                store: chatStore,
+                onOpenChat: {
+                    selectedTab = 0  // 👈 Wechsel automatisch zum Chat-Tab
+                }
+            )
+            .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+            .tag(1)
+
+            DateView().tabItem { Label("Clock", systemImage: "clock") }.tag(2)
+            AccountView().tabItem {
+                Label("Account", systemImage: "person.crop.circle")
+            }.tag(4)
         }
     }
 }

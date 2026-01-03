@@ -8,5 +8,7 @@
     "messages_available": "Nachrichten verfügbar",
     "next_message_in": "Nächste Nachricht in %@",
 
-    "vision_locked": "Vision"
+    "vision_locked": "Vision",
+    "welcome_no_name": "Willkommen bei Khione",
+    "welcome_with_name": "Willkommen, %@"
 }

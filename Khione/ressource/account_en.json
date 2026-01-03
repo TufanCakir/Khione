@@ -1,14 +1,11 @@
 {
     "title": "Account",
-
     "profile_name_placeholder": "Name",
     "profile_local": "Local user profile",
-
     "language_section": "Language",
     "language_picker": "Select language",
     "language_de": "German",
     "language_en": "English",
-
     "subscription_section": "Subscription",
     "current_plan": "Current plan",
     "upgrade": "Upgrade",
@@ -21,10 +18,8 @@
     "plan_pro": "Pro",
     "plan_vision": "Vision",
     "plan_vision": "Infinity",
-
     "app_section": "App",
     "appearance": "Appearance",
-
     "about_section": "About",
     "version": "Version",
     "built_with": "Built with Apple Foundation Models",
