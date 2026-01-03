@@ -34,9 +34,13 @@ struct RootView: View {
             .tag(1)
 
             DateView().tabItem { Label("Clock", systemImage: "clock") }.tag(2)
-            AccountView().tabItem {
+            NavigationStack {
+                AccountView()
+            }
+            .tabItem {
                 Label("Account", systemImage: "person.crop.circle")
-            }.tag(4)
+            }
+            .tag(4)
         }
     }
 }
