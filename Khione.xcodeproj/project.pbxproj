@@ -48,16 +48,6 @@
 			path = Khione;
 			sourceTree = "<group>";
 		};
-		2B516FE92EEE27AC001DA0CC /* KhioneTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = KhioneTests;
-			sourceTree = "<group>";
-		};
-		2B516FF32EEE27AC001DA0CC /* KhioneUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = KhioneUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,8 +79,6 @@
 			isa = PBXGroup;
 			children = (
 				2B516FDB2EEE27AB001DA0CC /* Khione */,
-				2B516FE92EEE27AC001DA0CC /* KhioneTests */,
-				2B516FF32EEE27AC001DA0CC /* KhioneUITests */,
 				2B516FDA2EEE27AB001DA0CC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -143,9 +131,6 @@
 			dependencies = (
 				2B516FE82EEE27AC001DA0CC /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				2B516FE92EEE27AC001DA0CC /* KhioneTests */,
-			);
 			name = KhioneTests;
 			packageProductDependencies = (
 			);
@@ -165,9 +150,6 @@
 			);
 			dependencies = (
 				2B516FF22EEE27AC001DA0CC /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				2B516FF32EEE27AC001DA0CC /* KhioneUITests */,
 			);
 			name = KhioneUITests;
 			packageProductDependencies = (
@@ -422,18 +404,19 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Khione/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Khione benötigt Zugriff auf das Mikrofon für Spracheingabe.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Khione needs access to your photo library to let you share images in chat.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Khione wandelt deine Sprache lokal in Text um.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Khione benötigt Zugriff auf Ihre Fotobibliothek, damit Sie Bilder im Chat teilen können.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Khione wandelt Ihre Sprache lokal in Text um.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tufancakir.Khione;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -458,18 +441,19 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Khione/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Khione benötigt Zugriff auf das Mikrofon für Spracheingabe.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Khione needs access to your photo library to let you share images in chat.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Khione wandelt deine Sprache lokal in Text um.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Khione benötigt Zugriff auf Ihre Fotobibliothek, damit Sie Bilder im Chat teilen können.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Khione wandelt Ihre Sprache lokal in Text um.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tufancakir.Khione;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

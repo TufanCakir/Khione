@@ -1,26 +1,27 @@
 {
     "title": "Khione",
-    "subtitle": "Ein modernes KI-Erlebnis für Klarheit und Fokus",
+    "subtitle": "On-Device KI. Schnell. Privat. Natürlich.",
+
     "sections": [
         {
-            "title": "Was ist Khione?",
+            "title": "On-Device KI",
             "text":
-                "Khione ist ein hochwertiger KI-Assistent für Klarheit, Kreativität und Produktivität – entwickelt, um dich im Alltag und bei Ideen effektiv zu unterstützen."
+                "Khione arbeitet vollständig auf deinem Gerät. Alle Berechnungen erfolgen direkt auf deinem iPhone – ohne Cloud, ohne externe Server und ohne Datenweitergabe. Dadurch bleibt alles privat, schnell verfügbar und zuverlässig, auch ohne Internetverbindung."
         },
         {
-            "title": "Intelligent & effizient",
+            "title": "Voll nativ & leistungsstark",
             "text":
-                "Khione kombiniert schnelle Reaktionen mit einer klaren, modernen Benutzeroberfläche für ein flüssiges und angenehmes Nutzungserlebnis."
+                "Khione wurde vollständig mit Swift und SwiftUI entwickelt und ist optimal auf iOS abgestimmt. Moderne Apple-Frameworks, System-Themes und native Technologien sorgen für eine besonders flüssige, schnelle und energieeffiziente Nutzung."
         },
         {
-            "title": "Privatsphäre zuerst",
+            "title": "Siri & Systemintegration",
             "text":
-                "Deine Eingaben werden verantwortungsvoll behandelt. Datenschutz und Transparenz stehen bei Khione an erster Stelle."
+                "Khione lässt sich direkt über Siri und Spotlight öffnen und starten. Dadurch ist die KI jederzeit erreichbar und nahtlos in iOS integriert – schnell, unkompliziert und ohne Umwege."
         },
         {
-            "title": "Abonnement",
+            "title": "Privatsphäre & Barrierefreiheit",
             "text":
-                "Khione bietet optionale Abonnements mit erweiterten Funktionen. Ein grundlegender Funktionsumfang ist kostenlos nutzbar. Abonnements können jederzeit in den iOS-Einstellungen verwaltet oder gekündigt werden."
+                "Privatsphäre, Zugänglichkeit und einfache Bedienung stehen im Mittelpunkt. Khione unterstützt Sprachsteuerung und wurde bewusst klar und reduziert gestaltet. Die App hilft besonders Menschen mit unterschiedlichen Bedürfnissen und wird kontinuierlich erweitert, um Nutzung und Zugang weiter zu verbessern."
         }
     ]
 }

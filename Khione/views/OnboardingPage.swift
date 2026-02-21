@@ -7,60 +7,67 @@
 
 import SwiftUI
 
+enum OnboardingIcon {
+    case system(String)
+    case asset(String)
+}
+
 struct OnboardingPage: View {
 
-    let icon: String
+    private let iconSize: CGFloat = 56
+
+    let icon: OnboardingIcon
     let title: String
     let text: String
 
     var body: some View {
-        VStack(spacing: 28) {
-            Spacer(minLength: 40)
+        VStack(spacing: 24) {
 
+            Spacer()
             iconView
 
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 Text(title)
-                    .font(.largeTitle.bold())
+                    .font(.title.bold())
                     .multilineTextAlignment(.center)
 
                 Text(text)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
             }
+            .padding(.horizontal)
 
             Spacer()
         }
-        .padding(.horizontal)
+        .padding()
+        .accessibilityElement(children: .contain)
     }
 }
 
 extension OnboardingPage {
 
     fileprivate var iconView: some View {
-        Image(systemName: icon)
-            .font(.system(size: 60, weight: .semibold))
-            .foregroundStyle(.primary)
-            .padding(24)
-            .background(
-                Circle()
-                    .fill(.ultraThinMaterial)
-            )
-            .overlay(
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.primary.opacity(0.15),
-                                Color.clear,
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                        lineWidth: 1
-                    )
-            )
+        Group {
+            switch icon {
+
+            case .system(let name):
+                Image(systemName: name)
+                    .font(.system(size: iconSize, weight: .semibold))
+
+            case .asset(let name):
+                Image(name)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: iconSize, height: iconSize)
+            }
+        }
+        .foregroundStyle(.primary)
+        .padding(24)
+        .background(
+            Circle()
+                .fill(.thinMaterial)
+        )
+        .accessibilityHidden(true)
     }
 }

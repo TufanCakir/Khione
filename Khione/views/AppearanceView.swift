@@ -99,7 +99,7 @@ extension AppearanceView {
 }
 
 #Preview {
-    KhionePreviewRoot {
+    PreviewRoot {
         AppearanceView()
     }
 }

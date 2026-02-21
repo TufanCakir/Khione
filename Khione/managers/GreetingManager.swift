@@ -9,7 +9,7 @@ import Foundation
 
 enum GreetingManager {
 
-    private static let key = "khione_did_greet_this_session"
+    private static let key = "did_greet_this_session"
 
     static func shouldGreet() -> Bool {
         !UserDefaults.standard.bool(forKey: key)

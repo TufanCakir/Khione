@@ -1,5 +1,5 @@
 //
-//  KhioneViewLocalization.swift
+//  ViewLocalization.swift
 //  Khione
 //
 //  Created by Tufan Cakir on 18.12.25.
@@ -7,17 +7,12 @@
 
 import Foundation
 
-struct KhioneViewLocalization: Decodable {
+struct ViewLocalization: Decodable {
 
     let thinking: String
     let messagePlaceholder: String
     let imageInfo: String
     let openImagePlayground: String
-    let messagesAvailable: String
-    let nextMessageIn: String
-    let visionLocked: String
-
-    // 🧊 Greeting
     let welcomeNoName: String
     let welcomeWithName: String
 
@@ -26,25 +21,19 @@ struct KhioneViewLocalization: Decodable {
         case messagePlaceholder = "message_placeholder"
         case imageInfo = "image_info"
         case openImagePlayground = "open_image_playground"
-        case messagesAvailable = "messages_available"
-        case nextMessageIn = "next_message_in"
-        case visionLocked = "vision_locked"
         case welcomeNoName = "welcome_no_name"
         case welcomeWithName = "welcome_with_name"
     }
 }
 
-extension KhioneViewLocalization {
+extension ViewLocalization {
 
-    static let fallback = KhioneViewLocalization(
+    static let fallback = ViewLocalization(
         thinking: "Thinking…",
         messagePlaceholder: "Message…",
         imageInfo: "Images via Image Playground",
         openImagePlayground: "Open Image Playground",
-        messagesAvailable: "Messages available",
-        nextMessageIn: "Next message in %@",
-        visionLocked: "Vision",
-        welcomeNoName: "Welcome to Khione",
+        welcomeNoName: "Welcome to Teanttra",
         welcomeWithName: "Welcome, %@"
     )
 }
@@ -55,7 +44,7 @@ extension Bundle {
         language: String = Locale.current.language.languageCode?.identifier
             ?? "en",
         fallback: String = "en"
-    ) -> KhioneViewLocalization {
+    ) -> ViewLocalization {
 
         if let loc = loadKhioneViewFile(language) {
             return loc
@@ -71,16 +60,16 @@ extension Bundle {
     }
 
     private func loadKhioneViewFile(_ language: String)
-        -> KhioneViewLocalization?
+        -> ViewLocalization?
     {
-        let file = "khione_view_\(language)"
+        let file = "view_\(language)"
         guard
             let url = url(forResource: file, withExtension: "json"),
             let data = try? Data(contentsOf: url)
         else { return nil }
 
         return try? JSONDecoder().decode(
-            KhioneViewLocalization.self,
+            ViewLocalization.self,
             from: data
         )
     }

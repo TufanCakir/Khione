@@ -1,0 +1,42 @@
+[
+    {
+        "id": "GMORNING",
+        "text": "Good morning",
+        "sfSymbol": "sunrise.fill",
+        "fromHour": 5,
+        "toHour": 10
+    },
+    {
+        "id": "GLATE_MORNING",
+        "text": "Good late morning",
+        "sfSymbol": "sun.max.fill",
+        "fromHour": 10,
+        "toHour": 12
+    },
+    {
+        "id": "GAFTERNOON",
+        "text": "Good afternoon",
+        "sfSymbol": "sun.max.circle.fill",
+        "fromHour": 12,
+        "toHour": 17
+    },
+    {
+        "id": "GEVENING",
+        "text": "Good evening",
+        "sfSymbol": "sunset.fill",
+        "fromHour": 17,
+        "toHour": 21
+    },
+    {
+        "id": "GNIGHT",
+        "text": "Good night",
+        "sfSymbol": "moon.stars.fill",
+        "fromHour": 21,
+        "toHour": 5
+    },
+    {
+        "id": "GENERIC",
+        "text": "Hi there",
+        "sfSymbol": "hand.wave.fill"
+    }
+]

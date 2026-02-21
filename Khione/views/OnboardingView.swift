@@ -13,49 +13,79 @@ struct OnboardingView: View {
     @State private var page = 0
 
     var body: some View {
-        VStack(spacing: 32) {
+        VStack {
 
             TabView(selection: $page) {
 
                 OnboardingPage(
-                    icon: "snowflake",
+                    icon: .system("snowflake"),
                     title: "Khione",
                     text:
-                        "Your native AI assistant for clarity, creativity and productivity.",
+                        """
+                        On-device AI.
+                        Fast. Private. Natural.
+
+                        Runs entirely on your iPhone.
+                        No cloud. No servers.
+                        Your data stays with you.
+                        """
                 )
                 .tag(0)
 
                 OnboardingPage(
-                    icon: "sparkles",
-                    title: "Powerful & Private",
+                    icon: .system("sparkles"),
+                    title: "Fast & Natural",
                     text:
-                        "Chat, Vision and Apple Intelligence — designed for speed and privacy.",
+                        """
+                        Designed for clarity and speed.
+
+                        Ask questions, explore ideas,
+                        and get helpful answers instantly —
+                        even offline.
+                        """
                 )
                 .tag(1)
 
                 OnboardingPage(
-                    icon: "checkmark.seal",
-                    title: "Ready to Start",
+                    icon: .system("hand.raised.fill"),
+                    title: "Privacy & Accessibility",
                     text:
-                        "Start for free. Upgrade anytime to unlock advanced features.",
+                        """
+                        Privacy comes first.
+
+                        Simple language, voice interaction,
+                        and an accessible design make
+                        Khione easy for everyone.
+                        """
                 )
                 .tag(2)
             }
-            .tabViewStyle(.page)
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .animation(.easeInOut, value: page)
 
-            Button {
-                if page < 2 {
-                    withAnimation { page += 1 }
-                } else {
-                    onFinish()
-                }
-            } label: {
-                Text(page < 2 ? "Continue" : "Start using Khione")
-                    .frame(maxWidth: .infinity)
+            Button(action: advance) {
+
+                Text(
+                    page < 2
+                        ? "Continue"
+                        : "Start using Khione"
+                )
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .padding(.horizontal)
+            .controlSize(.large)
+            .padding()
         }
-        .padding(.bottom)
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: 8)
+        }
+    }
+
+    private func advance() {
+        if page < 2 {
+            page += 1
+        } else {
+            onFinish()
+        }
     }
 }

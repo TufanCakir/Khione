@@ -1,26 +1,27 @@
 {
     "title": "Khione",
-    "subtitle": "A modern AI experience for clarity and focus",
+    "subtitle": "On-device AI. Fast. Private. Natural.",
+
     "sections": [
         {
-            "title": "What is Khione?",
+            "title": "On-Device AI",
             "text":
-                "Khione is a high-quality AI assistant designed for clarity, creativity, and productivity — built to support you effectively in everyday tasks and idea development."
+                "Khione runs entirely on your device. All processing happens directly on your iPhone — without cloud services, external servers, or data sharing. This keeps everything private, fast, and reliable, even without an internet connection."
         },
         {
-            "title": "Smart & efficient",
+            "title": "Fully Native & Powerful",
             "text":
-                "Khione combines fast responses with a clean, modern user interface for a smooth and enjoyable experience."
+                "Khione is built entirely with Swift and SwiftUI and is deeply optimized for iOS. Modern Apple frameworks, system themes, and native technologies provide a smooth, responsive, and energy-efficient experience."
         },
         {
-            "title": "Privacy first",
+            "title": "Siri & System Integration",
             "text":
-                "Your input is handled responsibly. Privacy and transparency are core principles of Khione."
+                "Khione can be opened directly through Siri and Spotlight. This makes the AI instantly accessible and seamlessly integrated into iOS — fast, simple, and always within reach."
         },
         {
-            "title": "Subscription",
+            "title": "Privacy & Accessibility",
             "text":
-                "Khione offers optional subscriptions with extended features. A basic set of functionality is available for free. Subscriptions can be managed or canceled at any time in the iOS settings."
+                "Privacy, accessibility, and ease of use are at the core of Khione. The app supports voice interaction and was intentionally designed to be clear and minimal. Khione helps people with different needs and continues to evolve to make interaction even easier and more accessible."
         }
     ]
 }

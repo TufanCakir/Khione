@@ -2,13 +2,14 @@
 //  RootView.swift
 //  Khione
 //
+//  Created by Tufan Cakir on 16.12.25.
+//
 
 import SwiftUI
 
 struct RootView: View {
 
     @StateObject private var chatStore = ChatStore()
-    @EnvironmentObject private var internet: InternetMonitor
 
     @State private var selectedTab = 0  // 👈 NEU
 
@@ -24,7 +25,7 @@ struct RootView: View {
                 }
                 .tag(0)
 
-            KhioneSidebar(
+            Sidebar(
                 store: chatStore,
                 onOpenChat: {
                     selectedTab = 0  // 👈 Wechsel automatisch zum Chat-Tab
@@ -33,7 +34,6 @@ struct RootView: View {
             .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
             .tag(1)
 
-            DateView().tabItem { Label("Clock", systemImage: "clock") }.tag(2)
             NavigationStack {
                 AccountView()
             }

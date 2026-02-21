@@ -1,6 +1,8 @@
 //
-//  ChatMessage.swift
+//  MessageKind.swift
 //  Khione
+//
+//  Created by Tufan Cakir on 02.01.26.
 //
 
 import Foundation

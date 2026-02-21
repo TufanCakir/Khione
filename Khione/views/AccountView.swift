@@ -2,28 +2,21 @@
 //  AccountView.swift
 //  Khione
 //
+//  Created by Tufan Cakir on 16.12.25.
+//
 
-import StoreKit
 import SwiftUI
 
 struct AccountView: View {
 
     // MARK: - Environment
     @EnvironmentObject private var themeManager: ThemeManager
-    @EnvironmentObject private var subscription: SubscriptionManager
 
     // MARK: - Storage
-    @AppStorage("khione_username") private var username = ""
-    @AppStorage("khione_language")
+    @AppStorage("username") private var username = ""
+    @AppStorage("language")
     private var language =
         Locale.current.language.languageCode?.identifier ?? "en"
-
-    // MARK: - Links
-    private let privacyURL = URL(string: "https://khione-privacy.netlify.app/")!
-    private let eulaURL = URL(
-        string:
-            "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
-    )!
 
     // MARK: - Localization
     private var text: AccountLocalization {
@@ -37,197 +30,65 @@ struct AccountView: View {
             .split(separator: " ")
             .prefix(2)
             .compactMap(\.first)
+
         return letters.isEmpty
             ? "?" : letters.map { String($0).uppercased() }.joined()
     }
 
     // MARK: - Body
     var body: some View {
-        ZStack {
-            themeManager.backgroundColor.ignoresSafeArea()
-
-            List {
-                profileSection
-                subscriptionSection
-                languageSection
-                appSection
-                aboutSection
-            }
-            .scrollContentBackground(.hidden)
-            .scrollDismissesKeyboard(.interactively)
+        Form {
+            profileSection
+            languageSection
+            appSection
+            aboutSection
         }
         .navigationTitle(text.title)
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.locale, Locale(identifier: language))
+        .scrollDismissesKeyboard(.interactively)
     }
 }
 
 extension AccountView {
-
-    fileprivate var profileSection: some View {
+    private var profileSection: some View {
         Section {
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
 
                 Circle()
-                    .fill(Color.accentColor)
+                    .fill(.tint)
                     .frame(width: 72, height: 72)
-                    .overlay(
+                    .overlay {
                         Text(initials)
                             .font(.title.bold())
-                            .foregroundColor(.white)
-                    )
-                    .accessibilityLabel("User avatar")
+                            .foregroundStyle(.white)
+                    }
+                    .accessibilityHidden(true)
 
                 TextField(text.profileNamePlaceholder, text: $username)
+                    .textFieldStyle(.roundedBorder)
                     .submitLabel(.done)
 
                 Text(text.profileLocal)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 12)
-        }
-    }
-}
-
-extension AccountView {
-
-    fileprivate var subscriptionSection: some View {
-        Section(text.subscriptionSection) {
-            VStack(spacing: 16) {
-
-                headerRow
-                Divider().opacity(0.4)
-                infoRow
-                subscriptionAction
-                activeBadge
-            }
-            .padding()
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .padding(.vertical, 6)
-        }
-    }
-
-    fileprivate var headerRow: some View {
-        HStack {
-            Label(text.currentPlan, systemImage: "crown")
-                .font(.subheadline.weight(.medium))
-            Spacer()
-            planBadge
-        }
-    }
-
-    fileprivate var infoRow: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "info.circle.fill")
-                .foregroundColor(.secondary)
-
-            Text(text.subscriptionInfo)
-                .font(.footnote)
-                .foregroundColor(.secondary)
-        }
-    }
-
-    fileprivate var subscriptionAction: some View {
-        NavigationLink {
-            ViewFactory.view(for: .subscription)
-        } label: {
-            Label(
-                subscription.tier == .free
-                    ? text.upgrade : text.manageSubscription,
-                systemImage: "eurosign.circle.fill"
-            )
-            .font(.callout.weight(.semibold))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Color.accentColor.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.vertical, 8)
         }
     }
 
-    @ViewBuilder
-    fileprivate var activeBadge: some View {
-        if subscription.tier != .free {
-            Label(text.activeSubscription, systemImage: "checkmark.seal.fill")
-                .font(.footnote.weight(.medium))
-                .foregroundColor(.green)
-        }
-    }
-}
-
-extension AccountView {
-
-    var localizedPlanName: String {
-        switch subscription.tier {
-        case .free: return text.planFree
-        case .pro: return text.planPro
-        case .vision: return text.planVision
-        case .infinity: return text.planInfinity
-        }
-    }
-
-    @ViewBuilder
-    fileprivate var planBadge: some View {
-        switch subscription.tier {
-
-        case .free:
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(localizedPlanName).badgeStyle()
-                    .badgeStyle()
-
-                Label(
-                    text.upgradeAvailable,
-                    systemImage: "arrow.up.circle"
-                )
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            }
-
-        default:
-            if let product = subscription.activeProduct {
-                priceBadge(product)
-            }
-        }
-    }
-
-    private var subscriptionText: SubscriptionLocalization {
-        Bundle.main.loadSubscriptionLocalization(language: language)
-    }
-
-    fileprivate func priceBadge(_ product: Product) -> some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text(product.displayPrice)
-                .font(.caption.bold())
-
-            if let period = product.subscription?.subscriptionPeriod {
-                Text(period.displayText(using: subscriptionText))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(Color.accentColor.opacity(0.18)))
-    }
-}
-
-extension AccountView {
-
-    fileprivate var languageSection: some View {
+    private var languageSection: some View {
         Section(text.languageSection) {
             Picker(text.languagePicker, selection: $language) {
                 Text(text.languageDE).tag("de")
                 Text(text.languageEN).tag("en")
             }
             .pickerStyle(.segmented)
-            .onChange(of: language) { _, _ in
-                subscription.reloadPlans()
-            }
         }
     }
 
-    fileprivate var appSection: some View {
+    private var appSection: some View {
         Section(text.appSection) {
             NavigationLink {
                 AppearanceView()
@@ -237,68 +98,25 @@ extension AccountView {
         }
     }
 
-    fileprivate var aboutSection: some View {
+    private var aboutSection: some View {
         Section(text.aboutSection) {
-
             NavigationLink {
-                KhioneInfoView()
+                InfoView()
             } label: {
                 Label("Khione", systemImage: "snowflake")
             }
 
             Label(Bundle.main.appVersionString, systemImage: "number")
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Label(text.builtWith, systemImage: "applelogo")
-
-            Link(destination: privacyURL) {
-                Label(text.privacy, systemImage: "hand.raised")
-            }
-
-            // ✅ NEU: Apple EULA
-            Link(destination: eulaURL) {
-                Label(text.tos, systemImage: "doc.text")
-            }
-        }
-    }
-}
-
-extension View {
-    fileprivate func badgeStyle() -> some View {
-        self
-            .font(.caption.bold())
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Capsule().fill(Color.secondary.opacity(0.15)))
-    }
-
-    fileprivate func hideKeyboard() {
-        UIApplication.shared.sendAction(
-            #selector(UIResponder.resignFirstResponder),
-            to: nil,
-            from: nil,
-            for: nil
-        )
-    }
-}
-extension Bundle {
-    var appVersionString: String {
-        let version =
-            infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
-
-        let build =
-            infoDictionary?["CFBundleVersion"] as? String ?? ""
-
-        if build.isEmpty {
-            return "Version \(version)"
-        } else {
-            return "Version \(version) (\(build))"
+                .foregroundStyle(.secondary)
         }
     }
 }
 
 #Preview {
-    KhionePreviewRoot {
+    PreviewRoot {
         NavigationStack {
             AccountView()
         }

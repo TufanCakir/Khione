@@ -12,12 +12,19 @@ import SwiftUI
 @MainActor
 final class ChatStore: ObservableObject {
 
-    @Published var sessions: [ChatSession] = []
+    // MARK: - Published
+
+    @Published private(set) var sessions: [ChatSession] = []
     @Published var activeID: UUID?
 
-    private let key = "khione_chat_sessions"
+    // MARK: - Storage
+
+    private let key = "chat_sessions"
+
+    // MARK: - Init
 
     init() {
+
         load()
 
         if sessions.isEmpty {
@@ -25,104 +32,185 @@ final class ChatStore: ObservableObject {
         }
     }
 
-    func deleteChats(at offsets: IndexSet) {
-        sessions.remove(atOffsets: offsets)
+    // MARK: - Active Chat
 
-        if let first = sessions.first {
-            activeID = first.id
-        } else {
-            createNewChat()  // ← 🔥 AUTO-REGENERATION
-            return
-        }
+    var activeChatIndex: Int? {
+
+        guard let id = activeID else { return nil }
+
+        return sessions.firstIndex { $0.id == id }
+    }
+
+    var activeChat: ChatSession? {
+
+        guard let index = activeChatIndex else { return nil }
+
+        return sessions[index]
+    }
+
+    // MARK: - Mutation Helper ⭐ (WICHTIG)
+
+    func updateActiveChat(
+        _ update: (inout ChatSession) -> Void
+    ) {
+
+        guard let index = activeChatIndex else { return }
+
+        update(&sessions[index])
 
         save()
     }
 
-    func moveChats(from source: IndexSet, to destination: Int) {
-        sessions.move(fromOffsets: source, toOffset: destination)
+    // MARK: - Chats
+
+    func createNewChat() {
+
+        // verhindert Spam New Chats
+        if activeChat?.messages.isEmpty == true {
+            return
+        }
+
+        let chat = ChatSession(title: "New Chat")
+
+        sessions.insert(chat, at: 0)
+
+        activeID = chat.id
+
         save()
     }
 
     func renameActiveChat(to title: String) {
-        guard let id = activeID,
-            let i = sessions.firstIndex(where: { $0.id == id })
-        else { return }
-        sessions[i].title = title
-        save()
-    }
 
-    func createNewChat() {
-        if activeChat?.messages.isEmpty == true { return }  // verhindert Spam
+        updateActiveChat {
 
-        let chat = ChatSession(title: "New Chat")
-        sessions.insert(chat, at: 0)
-        activeID = chat.id
-        save()
+            $0.title =
+                title
+                .trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+        }
     }
 
     func rename(_ chat: ChatSession, to newTitle: String) {
-        guard let index = sessions.firstIndex(where: { $0.id == chat.id })
+
+        guard
+            let index = sessions.firstIndex(
+                where: { $0.id == chat.id }
+            )
         else { return }
 
-        sessions[index].title = newTitle.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
+        sessions[index].title =
+            newTitle.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
         save()
     }
 
     func delete(_ chat: ChatSession) {
+
         sessions.removeAll { $0.id == chat.id }
 
         if sessions.isEmpty {
+
             createNewChat()
+
         } else if activeID == chat.id {
+
             activeID = sessions.first?.id
         }
 
         save()
     }
 
-    var activeChat: ChatSession? {
-        sessions.first { $0.id == activeID }
-    }
+    func deleteChats(at offsets: IndexSet) {
 
-    func update(messages: [ChatMessage]) {
-        guard let id = activeID,
-            let i = sessions.firstIndex(where: { $0.id == id })
-        else { return }
-        sessions[i].messages = messages
+        sessions.remove(atOffsets: offsets)
+
+        if sessions.isEmpty {
+
+            createNewChat()
+
+        } else {
+
+            activeID = sessions.first?.id
+        }
+
         save()
     }
 
-    private func save() {
-        if let data = try? JSONEncoder().encode(sessions) {
-            UserDefaults.standard.set(data, forKey: key)
-            UserDefaults.standard.set(
-                activeID?.uuidString,
-                forKey: "\(key)_active"
-            )
+    func moveChats(
+        from source: IndexSet,
+        to destination: Int
+    ) {
+
+        sessions.move(
+            fromOffsets: source,
+            toOffset: destination
+        )
+
+        save()
+    }
+
+    // MARK: - Messages ⭐
+
+    func update(messages: [ChatMessage]) {
+
+        updateActiveChat {
+
+            $0.messages = messages
         }
     }
 
+    // MARK: - Persistence
+
+    private func save() {
+
+        guard
+            let data = try? JSONEncoder().encode(
+                sessions
+            )
+        else { return }
+
+        UserDefaults.standard.set(
+            data,
+            forKey: key
+        )
+
+        UserDefaults.standard.set(
+            activeID?.uuidString,
+            forKey: "\(key)_active"
+        )
+    }
+
     private func load() {
-        if let data = UserDefaults.standard.data(forKey: key),
+
+        guard
+            let data = UserDefaults.standard.data(
+                forKey: key
+            ),
             let chats = try? JSONDecoder().decode(
                 [ChatSession].self,
                 from: data
             )
+        else {
+            return
+        }
+
+        sessions = chats
+
+        if let id = UserDefaults.standard.string(
+            forKey: "\(key)_active"
+        ),
+            let uuid = UUID(uuidString: id),
+            sessions.contains(where: { $0.id == uuid })
         {
 
-            sessions = chats
+            activeID = uuid
 
-            if let id = UserDefaults.standard.string(forKey: "\(key)_active"),
-                let uuid = UUID(uuidString: id),
-                sessions.contains(where: { $0.id == uuid })
-            {
+        } else {
 
-                activeID = uuid
-            } else {
-                activeID = sessions.first?.id
-            }
+            activeID = sessions.first?.id
         }
     }
 }

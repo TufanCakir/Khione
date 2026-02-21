@@ -2,6 +2,8 @@
 //  CodeBlockView.swift
 //  Khione
 //
+//  Created by Tufan Cakir on 16.12.25.
+//
 
 import SwiftUI
 
@@ -13,20 +15,19 @@ struct CodeBlockView: View {
     @State private var copied = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-
+        VStack(alignment: .leading, spacing: 8) {
             header
-
             codeArea
         }
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: - Header
     private var header: some View {
-        HStack {
+        HStack(spacing: 8) {
             Label("Code", systemImage: "chevron.left.slash.chevron.right")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
@@ -35,14 +36,17 @@ struct CodeBlockView: View {
                     Label(
                         copied ? "Copied" : "Copy",
                         systemImage: copied
-                            ? "checkmark.circle.fill" : "doc.on.doc"
+                            ? "checkmark.circle.fill"
+                            : "doc.on.doc"
                     )
                 }
                 .font(.caption)
-                .foregroundColor(copied ? .green : .secondary)
+                .foregroundStyle(copied ? Color.accentColor : Color.secondary)
                 .animation(.easeInOut(duration: 0.2), value: copied)
+                .accessibilityLabel(copied ? "Code copied" : "Copy code")
             }
         }
+        .padding(.horizontal, 4)
     }
 
     // MARK: - Code Area
@@ -50,17 +54,17 @@ struct CodeBlockView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             Text(code)
                 .font(.system(.body, design: .monospaced))
-                .foregroundColor(.white)
+                .foregroundStyle(.primary)
                 .padding(12)
                 .textSelection(.enabled)
         }
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.88))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.regularMaterial)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(.separator.opacity(0.6), lineWidth: 1)
         )
         .accessibilityLabel("Code block")
     }

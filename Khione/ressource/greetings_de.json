@@ -1,0 +1,42 @@
+[
+    {
+        "id": "GMORNING",
+        "text": "Guten Morgen",
+        "sfSymbol": "sunrise.fill",
+        "fromHour": 5,
+        "toHour": 10
+    },
+    {
+        "id": "GLATE_MORNING",
+        "text": "Guten Vormittag",
+        "sfSymbol": "sun.max.fill",
+        "fromHour": 10,
+        "toHour": 12
+    },
+    {
+        "id": "GAFTERNOON",
+        "text": "Guten Tag",
+        "sfSymbol": "sun.max.circle.fill",
+        "fromHour": 12,
+        "toHour": 17
+    },
+    {
+        "id": "GEVENING",
+        "text": "Guten Abend",
+        "sfSymbol": "sunset.fill",
+        "fromHour": 17,
+        "toHour": 21
+    },
+    {
+        "id": "GNIGHT",
+        "text": "Gute Nacht",
+        "sfSymbol": "moon.stars.fill",
+        "fromHour": 21,
+        "toHour": 5
+    },
+    {
+        "id": "GENERIC",
+        "text": "Hallo",
+        "sfSymbol": "hand.wave.fill"
+    }
+]

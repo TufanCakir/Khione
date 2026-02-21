@@ -5,10 +5,11 @@
 //  Created by Tufan Cakir on 14.12.25.
 //
 
+import Foundation
+
 enum SettingsTab: String, CaseIterable, Identifiable {
     case appearance
     case behavior
-    case subscription
     case about
 
     var id: String { rawValue }
@@ -17,7 +18,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .appearance: return "Appearance"
         case .behavior: return "Behavior"
-        case .subscription: return "Subscription"
         case .about: return "About"
         }
     }

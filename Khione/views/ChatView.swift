@@ -1,40 +1,37 @@
 //
-//  KhioneView.swift
+//  ChatView.swift
 //  Khione
 //
 //  Created by Tufan Cakir on 14.12.25.
 //
 
 import ImagePlayground
-import StoreKit
 import SwiftUI
 
-struct KhioneView: View {
+struct ChatView: View {
 
     // MARK: - State & Environment
     @StateObject private var viewModel = ViewModel()
     @StateObject private var speech = SpeechRecognizer()
     @ObservedObject var chatStore: ChatStore
 
-    @EnvironmentObject private var subscription: SubscriptionManager
     @EnvironmentObject private var themeManager: ThemeManager
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var inputText = ""
     @State private var selectedImage: UIImage?
 
-    @State private var showUpgradeSheet = false
     @State private var showImagePicker = false
     @State private var showImagePlayground = false
 
     @FocusState private var isInputFocused: Bool
-    @AppStorage("khione_username") private var username = ""
+    @AppStorage("username") private var username = ""
 
-    @AppStorage("khione_language")
+    @AppStorage("language")
     private var language =
         Locale.current.language.languageCode?.identifier ?? "en"
 
-    private var text: KhioneViewLocalization {
+    private var text: ViewLocalization {
         Bundle.main.loadKhioneViewLocalization(language: language)
     }
 
@@ -52,28 +49,28 @@ struct KhioneView: View {
             .isEmpty
     }
 
-    private var showInlineLimitHint: Bool {
-        subscription.tier == .free && subscription.remainingMessagesToday == 0
-            && !viewModel.isProcessing
-    }
+    private var showInlineLimitHint: Bool { false }
 
     // MARK: - Body
     var body: some View {
         ZStack {
             themeManager.backgroundColor.ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            Color.white.opacity(0.02).ignoresSafeArea()
+
+            VStack(spacing: 16) {
                 messagesArea
+
                 attachmentPreview
             }
             .contentShape(Rectangle())
             .onTapGesture { dismissInput() }
             .safeAreaInset(edge: .bottom) {
                 footerBar
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
                     .padding()
+                    .background(.ultraThinMaterial)
             }
+
             .animation(
                 .spring(response: 0.3, dampingFraction: 0.8),
                 value: canSend
@@ -84,47 +81,52 @@ struct KhioneView: View {
             print("Image Playground result:", url)
         }
         .sheet(isPresented: $showImagePicker) {
-            if subscription.canUseVision {
-                ImagePicker(image: $selectedImage)
-            }
+            ImagePicker(image: $selectedImage)
         }
         .onChange(of: speech.transcript) { _, newValue in
             if speech.isRecording { inputText = newValue }
         }
         .onAppear {
+            // Mode init (einmal)
             if viewModel.selectedMode == nil,
-                let first = KhioneModeRegistry.all.first
+                let first = ModeRegistry.all.first
             {
                 viewModel.setMode(first)
             }
 
+            // Start mode override
             if let modeID = UserDefaults.standard.string(
                 forKey: "khione_start_mode"
             ) {
                 viewModel.setModeByID(modeID)
                 UserDefaults.standard.removeObject(forKey: "khione_start_mode")
             }
-        }
-        .onDisappear { dismissInput(animated: false) }
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active { isInputFocused = false }
-        }
-        .sheet(isPresented: $showUpgradeSheet) {
-            SubscriptionView()
-        }
-        .onChange(of: chatStore.activeID) { _, _ in
-            viewModel.reset()
+
+            // Messages laden
             viewModel.loadMessages(chatStore.activeChat?.messages ?? [])
-        }
-        .onChange(of: inputText) { _, newValue in
-            withAnimation {
-                viewModel.removeGreetingIfNeeded()
-            }
-        }
-        .onAppear {
+
+            // ReplyStyles initial passend zur Sprache laden
+            viewModel.reloadLocalizations(language: language)
+
+            // Persist messages
             viewModel.onMessagesChanged = { newMessages in
                 chatStore.update(messages: newMessages)
             }
+        }
+        .onChange(of: inputText) { _, _ in
+            withAnimation { viewModel.removeGreetingIfNeeded() }
+        }
+        .onChange(of: language) { _, newLanguage in
+            viewModel.reloadLocalizations(language: newLanguage)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active { isInputFocused = false }
+        }
+        .onChange(of: speech.transcript) { _, newValue in
+            if speech.isRecording { inputText = newValue }
+        }
+        .onDisappear {
+            dismissInput(animated: false)
         }
     }
 
@@ -133,7 +135,7 @@ struct KhioneView: View {
         Group {
             ToolbarItem(placement: .principal) {
                 Menu {
-                    ForEach(subscription.allowedModes()) { mode in
+                    ForEach(ModeRegistry.all) { mode in
                         Button {
                             viewModel.setMode(mode)
                         } label: {
@@ -142,7 +144,7 @@ struct KhioneView: View {
                     }
                 } label: {
                     HStack(alignment: .bottom, spacing: 10) {
-                        Text(viewModel.selectedMode?.name ?? "Khione").font(
+                        Text(viewModel.selectedMode?.name ?? "Taenttra").font(
                             .headline
                         )
                         Image(systemName: "chevron.down").font(.caption)
@@ -178,8 +180,8 @@ struct KhioneView: View {
     // MARK: - Messages
     private var messagesList: some View {
         ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 12) {
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: 16) {
                     ForEach(viewModel.messages) { message in
                         ChatBubbleView(message: message).id(message.id)
                     }
@@ -188,7 +190,8 @@ struct KhioneView: View {
                         ProgressView(text.thinking).padding(.top).id("typing")
                     }
                 }
-                .padding(.vertical)
+                .padding(.vertical, 8)
+                .padding(.horizontal)
             }
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy)
@@ -200,7 +203,12 @@ struct KhioneView: View {
     }
 
     private var currentGreeting: Greeting {
-        let greetings = Bundle.main.loadGreetings()
+
+        let greetings =
+            Bundle.main.loadGreetings(
+                language: language
+            )
+
         return greetings.first(where: { $0.isValidNow() })
             ?? Greeting.fallback()
     }
@@ -216,9 +224,9 @@ struct KhioneView: View {
 
         return VStack(spacing: 16) {
 
-            Image(systemName: greeting.sfSymbol ?? "snowflake")
+            Image(systemName: greeting.sfSymbol ?? "cpu")
                 .symbolRenderingMode(.hierarchical)
-                .font(.system(size: 52, weight: .light))
+                .font(.system(.largeTitle, design: .rounded))
                 .foregroundStyle(themeManager.accentColor)
                 .shadow(
                     color: themeManager.accentColor.opacity(0.35),
@@ -233,6 +241,13 @@ struct KhioneView: View {
                 .padding(.horizontal, 40)
         }
         .padding(.vertical, 40)
+        .padding(.horizontal)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.08), radius: 14, x: 0, y: 8)
+        )
+        .padding()
     }
 
     // MARK: - Footer Switch
@@ -253,7 +268,7 @@ struct KhioneView: View {
 
     // MARK: - Chat Footer
     private var chatFooter: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 16) {
 
             // INPUT ROW
             HStack(alignment: .bottom, spacing: 8) {
@@ -263,15 +278,14 @@ struct KhioneView: View {
                     text: $inputText,
                     axis: .vertical
                 )
+
                 .focused($isInputFocused)
-                .lineLimit(1...4)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .lineLimit(1...5)
+                .textFieldStyle(.roundedBorder)
+
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(.white.opacity(0.06))
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(.white.opacity(0.08))
                 )
                 .opacity(showInlineLimitHint ? 0.35 : 1)
                 .disabled(showInlineLimitHint)
@@ -280,25 +294,32 @@ struct KhioneView: View {
             }
 
             // TOOL ROW
-            HStack(spacing: 18) {
+            HStack(spacing: 20) {
                 attachmentButton
                 replyStyleButton
                 speechButton
                 Spacer()
-            }
-            .padding(.horizontal, 6)
 
-            // LIMIT HINT
-            if showInlineLimitHint {
-                inlineLimitHint
-                    .font(.footnote)
-                    .padding(.horizontal, 8)
             }
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    Rectangle()
+                        .fill(.white.opacity(0.08))
+                        .frame(height: 1)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .clipShape(
+                            RoundedRectangle(
+                                cornerRadius: 22,
+                                style: .continuous
+                            )
+                        )
+                )
+                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 4)
+        )
     }
 
     private func iconButton(_ system: String) -> some View {
@@ -306,8 +327,10 @@ struct KhioneView: View {
             .symbolRenderingMode(.hierarchical)
             .font(.title3)
             .foregroundStyle(themeManager.accentColor)  // ← 💎 Theme hier!
-            .frame(width: 36, height: 36)
-            .background(.ultraThinMaterial)
+            .controlSize(.regular)
+            .buttonStyle(.bordered)
+
+            .background(.thinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -334,18 +357,6 @@ struct KhioneView: View {
         }
     }
 
-    private var inlineLimitHint: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            let remaining = max(
-                subscription.nextRefillDate.timeIntervalSince(context.date),
-                0
-            )
-            Text(String(format: text.nextMessageIn, formatInline(remaining)))
-                .font(.footnote.weight(.medium))
-                .foregroundColor(.secondary)
-        }
-    }
-
     private func formatInline(_ interval: TimeInterval) -> String {
         let m = Int(interval) / 60
         let s = Int(interval) % 60
@@ -367,14 +378,16 @@ struct KhioneView: View {
     // MARK: - Image Footer
     private var imageFooter: some View {
         VStack(spacing: 16) {
-            VStack(spacing: 12) {
-                Image(systemName: "photo.artframe")
+            VStack(spacing: 16) {
+                Image(systemName: "apple.image.playground")
                     .font(.system(size: 44))
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal)
 
                 Text(text.imageInfo)
                     .font(.footnote)
                     .foregroundColor(.secondary)
+                    .padding(.horizontal)
             }
 
             Button {
@@ -390,28 +403,29 @@ struct KhioneView: View {
             }
             .buttonStyle(.borderedProminent)
         }
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
         .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
+        )
+        .padding(.horizontal)
     }
 
     // MARK: - Buttons
     private var attachmentButton: some View {
         Button {
-            subscription.canUseVision
-                ? (showImagePicker = true) : (showUpgradeSheet = true)
+            showImagePicker = true
         } label: {
             iconButton("plus")
         }
-        .disabled(!subscription.canUseVision)
-        .opacity(subscription.canUseVision ? 1 : 0.35)
     }
 
     private var sendButton: some View {
         Button(action: handleSend) {
             Image(systemName: "arrow.up")
                 .font(.title3)
-                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
 
         }
         .buttonStyle(.borderedProminent)
@@ -425,6 +439,7 @@ struct KhioneView: View {
             Image(systemName: "xmark")
                 .font(.title3)
                 .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.bordered)
         .tint(.red)
@@ -446,7 +461,7 @@ struct KhioneView: View {
             iconButton(speech.isRecording ? "stop.fill" : "mic.fill")
                 .foregroundStyle(speech.isRecording ? .red : .primary)
         }
-        .animatedRainbowBorder(
+        .animatedFocusBorder(
             active: speech.isRecording,
             lineWidth: 2,
             radius: 14
@@ -459,7 +474,7 @@ struct KhioneView: View {
     // MARK: - Attachment Preview
     @ViewBuilder
     private var attachmentPreview: some View {
-        if subscription.canUseVision, let image = selectedImage {
+        if let image = selectedImage {
             HStack {
                 Image(uiImage: image)
                     .resizable()
@@ -477,9 +492,13 @@ struct KhioneView: View {
 
                 Spacer()
             }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
+            )
             .padding(.horizontal)
-            .padding(.vertical, 6)
-            .background(.ultraThinMaterial)
         }
     }
 
@@ -495,17 +514,7 @@ struct KhioneView: View {
             return
         }
 
-        guard subscription.canSendMessage else {
-            showUpgradeSheet = true
-            return
-        }
-
         viewModel.send(text: inputText, image: selectedImage)
-        subscription.consumeMessageIfNeeded()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            chatStore.update(messages: viewModel.messages)
-        }
 
         if chatStore.activeChat?.title == "New Chat" {
             chatStore.renameActiveChat(to: String(inputText.prefix(32)))
@@ -517,7 +526,7 @@ struct KhioneView: View {
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         if let last = viewModel.messages.last {
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(.easeOut(duration: 0.25)) {
                 proxy.scrollTo(last.id, anchor: .bottom)
             }
         }
@@ -568,9 +577,9 @@ extension UIApplication {
 }
 
 #Preview {
-    KhionePreviewRoot {
+    PreviewRoot {
         NavigationStack {
-            KhioneView(chatStore: ChatStore())
+            ChatView(chatStore: ChatStore())
         }
     }
 }

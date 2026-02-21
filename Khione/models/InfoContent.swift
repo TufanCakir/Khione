@@ -1,5 +1,5 @@
 //
-//  KhioneInfoContent.swift
+//  InfoContent.swift
 //  Khione
 //
 //  Created by Tufan Cakir on 18.12.25.
@@ -7,13 +7,13 @@
 
 import Foundation
 
-struct KhioneInfoContent: Decodable {
+struct InfoContent: Decodable {
     let title: String
     let subtitle: String
-    let sections: [KhioneInfoSection]
+    let sections: [InfoSection]
 }
 
-struct KhioneInfoSection: Decodable, Identifiable {
+struct InfoSection: Decodable, Identifiable {
     let id: UUID
     let title: String
     let text: String
@@ -32,14 +32,14 @@ struct KhioneInfoSection: Decodable, Identifiable {
 }
 
 extension Bundle {
-    func loadKhioneInfo(language: String) -> KhioneInfoContent {
+    func loadInfo(language: String) -> InfoContent {
         let files = ["info_\(language)", "info_en"]
 
         for file in files {
             if let url = url(forResource: file, withExtension: "json"),
                 let data = try? Data(contentsOf: url),
                 let decoded = try? JSONDecoder().decode(
-                    KhioneInfoContent.self,
+                    InfoContent.self,
                     from: data
                 )
             {

@@ -1,17 +1,19 @@
 //
-//  AnimatedRainbowBorder.swift
+//  AnimatedFocusBorder.swift
 //  Khione
+//
+//  Created by Tufan Cakir on 16.12.25.
 //
 
 import SwiftUI
 
-struct AnimatedRainbowBorder: ViewModifier {
+struct AnimatedFocusBorder: ViewModifier {
 
     let lineWidth: CGFloat
     let cornerRadius: CGFloat
     let isActive: Bool
 
-    @State private var angle: Double = 0
+    @State private var phase: CGFloat = 0
 
     func body(content: Content) -> some View {
         content
@@ -32,56 +34,49 @@ struct AnimatedRainbowBorder: ViewModifier {
     @ViewBuilder
     private var borderOverlay: some View {
         if isActive {
-            RoundedRectangle(cornerRadius: cornerRadius)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .stroke(
-                    AngularGradient(
-                        colors: rainbowColors,
-                        center: .center,
-                        angle: .degrees(angle)
+                    LinearGradient(
+                        colors: [
+                            Color.accentColor.opacity(0.2),
+                            Color.accentColor.opacity(0.8),
+                            Color.accentColor.opacity(0.2),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     ),
                     lineWidth: lineWidth
                 )
+                .opacity(0.9)
+                .animation(nil, value: isActive)
         }
     }
 
     // MARK: - Animation Control
     private func startIfNeeded() {
-        angle = 0
+        phase = 0
         withAnimation(
-            .linear(duration: 2.8)
-                .repeatForever(autoreverses: false)
+            .easeInOut(duration: 1.6)
+                .repeatForever(autoreverses: true)
         ) {
-            angle = 360
+            phase = 1
         }
     }
 
     private func stop() {
-        angle = 0
-    }
-
-    // MARK: - Colors
-    private var rainbowColors: [Color] {
-        [
-            .cyan,
-            .blue,
-            .purple,
-            .pink,
-            .orange,
-            .yellow,
-            .cyan,
-        ]
+        phase = 0
     }
 }
 
 extension View {
 
-    func animatedRainbowBorder(
+    func animatedFocusBorder(
         active: Bool,
-        lineWidth: CGFloat = 3,
+        lineWidth: CGFloat = 2,
         radius: CGFloat = 14
     ) -> some View {
         modifier(
-            AnimatedRainbowBorder(
+            AnimatedFocusBorder(
                 lineWidth: lineWidth,
                 cornerRadius: radius,
                 isActive: active

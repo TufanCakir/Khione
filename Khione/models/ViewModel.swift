@@ -1,3 +1,10 @@
+//
+//  ViewModel.swift
+//  Khione
+//
+//  Created by Tufan Cakir on 21.02.26.
+//
+
 internal import Combine
 import Foundation
 import FoundationModels
@@ -12,18 +19,18 @@ final class ViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     // MARK: - Modes
-    @Published private(set) var modes: [KhioneMode] = Bundle.main
+    @Published private(set) var modes: [Mode] = Bundle.main
         .loadKhioneModes()
-    @Published private(set) var selectedMode: KhioneMode?
+    @Published private(set) var selectedMode: Mode?
 
-    @Published var replyStyles: [KhioneReplyStyle] = Bundle.main
+    @Published var replyStyles: [ReplyStyle] = Bundle.main
         .loadReplyStyles()
-    @Published var selectedReplyStyle: KhioneReplyStyle?
+    @Published var selectedReplyStyle: ReplyStyle?
 
     // MARK: - Model
     private let model = SystemLanguageModel.default
     private var currentTask: Task<Void, Never>?
-
+    private var greetings: [Greeting] = []
     var onMessagesChanged: (([ChatMessage]) -> Void)?
 
     init() {
@@ -31,14 +38,59 @@ final class ViewModel: ObservableObject {
         replyStyles = Bundle.main.loadReplyStyles()
         selectedMode = modes.first
         selectedReplyStyle = replyStyles.first
-        onMessagesChanged?(messages)
+        reloadLocalizations(
+            language:
+                Locale.current.language.languageCode?.identifier ?? "en"
+        )
+        if let modeID = UserDefaults.standard.string(
+            forKey: "start_mode"
+        ),
+            let mode = modes.first(where: { $0.id == modeID })
+        {
+            selectedMode = mode
+            UserDefaults.standard.removeObject(forKey: "start_mode")
+        }
     }
+
     var greeting: Greeting {
-        GreetingManager.randomGreeting()
+
+        greetings.first(where: {
+
+            $0.isValidNow()
+
+        }) ?? Greeting.fallback()
+    }
+
+    func reloadLocalizations(language: String) {
+
+        replyStyles =
+            Bundle.main.loadReplyStyles(
+                language: language
+            )
+
+        greetings =
+            Bundle.main.loadGreetings(
+                language: language
+            )
+
+        if let current = selectedReplyStyle,
+            let match = replyStyles.first(where: {
+
+                $0.id == current.id
+
+            })
+        {
+
+            selectedReplyStyle = match
+
+        } else {
+
+            selectedReplyStyle = replyStyles.first
+        }
     }
 
     // MARK: - Mode Handling
-    func setMode(_ mode: KhioneMode) {
+    func setMode(_ mode: Mode) {
         guard selectedMode?.id != mode.id else { return }
         selectedMode = mode
         reset()
@@ -120,9 +172,9 @@ final class ViewModel: ObservableObject {
 
         let history =
             messages
-            .suffix(12)
-            .map { $0.text ?? "" }
-            .joined(separator: "\n")
+            .suffix(10)
+            .compactMap { $0.text }
+            .joined(separator: "\n---\n")
 
         blocks.append(history)
 
@@ -156,12 +208,47 @@ final class ViewModel: ObservableObject {
     private func systemPrompt() -> String {
         var base = """
             System:
-            You are Khione.
-            Always reply in the user’s language.
+            You are Taenttra, an on-device AI assistant.
+            You run locally and are optimized for speed, privacy, and clarity.
+            Always respond in the user's language.
+
+            Core principles:
+            - Be clear, direct, and natural.
+            - Avoid marketing language and generic phrases.
+            - Explain only what is necessary.
+            - Prefer simple words over complex terms.
+            - If something is uncertain, say so clearly.
+
+            Behavior rules:
+            - If the user asks for code, respond technically and precisely.
+            - Provide code only when relevant.
+            - Always format code using Markdown code blocks.
+            - If the user describes a problem or error, focus on diagnosis and concrete fixes.
+            - If the user asks for an explanation, explain step by step.
+            - If the user asks for a decision, compare options and give a clear recommendation.
+            - If the user asks creatively, allow flexible and original thinking.
+
+            Accessibility:
+            - If the user appears to need simple language or assistance, use short sentences.
+            - Keep structure clear and calm.
+            - Avoid unnecessary complexity.
+
+            Constraints:
+            - Do not invent facts.
+            - Do not assume missing information.
+            - Ask a brief clarifying question if required.
+
+            Vision limitations:
+            - You cannot see or interpret images.
+            - If an image is attached, you only receive text provided by the user.
+            - Never describe visual details unless the user explicitly describes them in text.
+            - If an image is relevant and not described, ask the user to describe it briefly.
+            - Do not guess or assume image content.
+
             """
 
         if let mode = selectedMode?.systemPrompt {
-            base += "\n\n" + mode
+            base += "\nMODE:\n" + mode
         }
 
         if let style = selectedReplyStyle?.prompt {

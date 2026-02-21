@@ -1,116 +1,127 @@
+//
+//  ChatBubbleView.swift
+//  Khione
+//
+//  Created by Tufan Cakir on 16.12.25.
+//
+
 import SwiftUI
 
 struct ChatBubbleView: View {
 
     let message: ChatMessage
-    @EnvironmentObject private var subscription: SubscriptionManager
 
     var body: some View {
-        HStack {
+        HStack(alignment: .bottom, spacing: 8) {
             if message.role == .assistant {
                 bubble
-                Spacer(minLength: 48)
+                Spacer(minLength: 0)
             } else {
-                Spacer(minLength: 48)
+                Spacer(minLength: 0)
                 bubble
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 12)
         .padding(.vertical, 4)
+        .frame(
+            maxWidth: .infinity,
+            alignment: message.role == .user ? .trailing : .leading
+        )
     }
 
     // MARK: - Bubble
     private var bubble: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            // 🖼 Image
+            // 🖼 Image (adaptive, no hard max)
             if let image = message.image {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: 220, maxHeight: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .frame(maxWidth: 280, maxHeight: 240)
+                    .clipped()
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    )
+                    .accessibilityLabel(Text("Attached image"))
             }
 
-            // ✨ Emoji / Symbol Header
+            // ✨ Emoji / Symbol Header (subtle)
             if message.emoji != nil || message.leadingSymbol != nil {
                 HStack(spacing: 6) {
                     if let emoji = message.emoji {
                         Text(emoji)
-                            .font(.title3)
+                            .font(.body)
                     }
 
                     if let symbol = message.leadingSymbol {
                         Image(systemName: symbol)
-                            .font(.title3)
+                            .font(.body)
                             .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
                     }
                 }
+                .padding(.bottom, 2)
             }
+
+            // 👋 Greeting (kept as-is)
             if message.kind == .greeting {
                 TypingGreetingView(text: message.text ?? "")
-                    .transition(.move(edge: .leading).combined(with: .opacity))
+                    .transition(.opacity.combined(with: .move(edge: .leading)))
             }
 
             // 💻 Code Block
             if message.isCode {
                 CodeBlockView(
                     code: extractCode(from: message.text ?? ""),
-                    canCopy: subscription.tier != .free
+                    canCopy: true
                 )
             }
-
-            // 💬 Text
+            // 💬 Text (Dynamic Type friendly)
             else if let text = message.text {
                 Text(.init(text))
                     .font(.body)
-                    .foregroundColor(textColor)
+                    .foregroundStyle(textForeground)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel(Text(text))
             }
         }
-        .padding(14)
-        .background(bubbleBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .overlay(assistantBorder)
-        .frame(maxWidth: 300, alignment: alignment)
-        .animation(.easeInOut(duration: 0.15), value: message.id)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            bubbleBackground,
+            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+        )
+        .overlay(bubbleBorder)
+        .frame(
+            maxWidth: 360,
+            alignment: message.role == .user ? .trailing : .leading
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    // MARK: - Background
-    @ViewBuilder
-    private var bubbleBackground: some View {
+    // MARK: - Background (system-first)
+    private var bubbleBackground: some ShapeStyle {
         if message.role == .user {
-            Color.accentColor.opacity(0.95)
+            return AnyShapeStyle(Color.accentColor)
         } else {
-            RoundedRectangle(cornerRadius: 18)
-                .fill(.ultraThinMaterial)
+            return AnyShapeStyle(.thinMaterial)
         }
     }
 
-    // MARK: - Assistant Border
+    // MARK: - Border (subtle, no neon)
     @ViewBuilder
-    private var assistantBorder: some View {
+    private var bubbleBorder: some View {
         if message.role == .assistant {
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(
-                    LinearGradient(
-                        colors: [.cyan.opacity(0.6), .purple.opacity(0.6)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(.separator.opacity(0.6), lineWidth: 1)
         }
     }
 
     // MARK: - Styling
-    private var textColor: Color {
-        message.role == .user ? .white : .primary
-    }
-
-    private var alignment: Alignment {
-        message.role == .user ? .trailing : .leading
+    private var textForeground: some ShapeStyle {
+        message.role == .user ? AnyShapeStyle(.white) : AnyShapeStyle(.primary)
     }
 
     // MARK: - Helpers

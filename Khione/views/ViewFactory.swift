@@ -9,7 +9,6 @@ import SwiftUI
 
 enum AppRoute {
     case account
-    case subscription
 }
 
 @MainActor
@@ -20,9 +19,6 @@ struct ViewFactory {
         switch route {
         case .account:
             AccountView()
-
-        case .subscription:
-            SubscriptionView()
         }
     }
 }
