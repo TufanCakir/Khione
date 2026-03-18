@@ -32,7 +32,7 @@ struct AccountView: View {
             .compactMap(\.first)
 
         return letters.isEmpty
-            ? "?" : letters.map { String($0).uppercased() }.joined()
+            ? "Name" : letters.map { String($0).uppercased() }.joined()
     }
 
     // MARK: - Body
@@ -43,8 +43,6 @@ struct AccountView: View {
             appSection
             aboutSection
         }
-        .navigationTitle(text.title)
-        .navigationBarTitleDisplayMode(.inline)
         .environment(\.locale, Locale(identifier: language))
         .scrollDismissesKeyboard(.interactively)
     }
@@ -57,24 +55,26 @@ extension AccountView {
 
                 Circle()
                     .fill(.tint)
-                    .frame(width: 72, height: 72)
+                    .frame(width: 100, height: 100)
                     .overlay {
                         Text(initials)
-                            .font(.title.bold())
                             .foregroundStyle(.white)
                     }
                     .accessibilityHidden(true)
 
-                TextField(text.profileNamePlaceholder, text: $username)
-                    .textFieldStyle(.roundedBorder)
-                    .submitLabel(.done)
+                HStack(spacing: 10) {
+                    Image(systemName: "person")
+                        .foregroundStyle(.secondary)
 
+                    TextField(text.profileNamePlaceholder, text: $username)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
                 Text(text.profileLocal)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
         }
     }
 
@@ -84,7 +84,6 @@ extension AccountView {
                 Text(text.languageDE).tag("de")
                 Text(text.languageEN).tag("en")
             }
-            .pickerStyle(.segmented)
         }
     }
 
@@ -107,10 +106,8 @@ extension AccountView {
             }
 
             Label(Bundle.main.appVersionString, systemImage: "number")
-                .foregroundStyle(.secondary)
 
             Label(text.builtWith, systemImage: "applelogo")
-                .foregroundStyle(.secondary)
         }
     }
 }

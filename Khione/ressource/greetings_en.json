@@ -1,9 +1,23 @@
 [
     {
+        "id": "GMORNING_EARLY",
+        "text": "Good early morning",
+        "sfSymbol": "sunrise.fill",
+        "fromHour": 4,
+        "toHour": 6
+    },
+    {
         "id": "GMORNING",
         "text": "Good morning",
         "sfSymbol": "sunrise.fill",
-        "fromHour": 5,
+        "fromHour": 6,
+        "toHour": 10
+    },
+    {
+        "id": "GMORNING_ALT",
+        "text": "Have a nice morning",
+        "sfSymbol": "sunrise",
+        "fromHour": 6,
         "toHour": 10
     },
     {
@@ -21,9 +35,30 @@
         "toHour": 17
     },
     {
+        "id": "GAFTERNOON_ALT",
+        "text": "Have a nice day",
+        "sfSymbol": "sun.max",
+        "fromHour": 12,
+        "toHour": 17
+    },
+    {
+        "id": "GLATE_AFTERNOON",
+        "text": "Nice afternoon",
+        "sfSymbol": "sun.max",
+        "fromHour": 15,
+        "toHour": 18
+    },
+    {
         "id": "GEVENING",
         "text": "Good evening",
         "sfSymbol": "sunset.fill",
+        "fromHour": 17,
+        "toHour": 21
+    },
+    {
+        "id": "GEVENING_ALT",
+        "text": "Have a nice evening",
+        "sfSymbol": "sunset",
         "fromHour": 17,
         "toHour": 21
     },
@@ -35,8 +70,15 @@
         "toHour": 5
     },
     {
+        "id": "GWEEKEND",
+        "text": "Have a nice weekend",
+        "sfSymbol": "calendar",
+        "fromHour": 9,
+        "toHour": 18
+    },
+    {
         "id": "GENERIC",
-        "text": "Hi there",
+        "text": "Hello",
         "sfSymbol": "hand.wave.fill"
     }
 ]

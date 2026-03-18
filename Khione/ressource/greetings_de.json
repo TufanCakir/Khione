@@ -1,9 +1,23 @@
 [
     {
+        "id": "GMORNING_EARLY",
+        "text": "Guten frühen Morgen",
+        "sfSymbol": "sunrise.fill",
+        "fromHour": 4,
+        "toHour": 6
+    },
+    {
         "id": "GMORNING",
         "text": "Guten Morgen",
         "sfSymbol": "sunrise.fill",
-        "fromHour": 5,
+        "fromHour": 6,
+        "toHour": 10
+    },
+    {
+        "id": "GMORNING_ALT",
+        "text": "Einen schönen Morgen",
+        "sfSymbol": "sunrise",
+        "fromHour": 6,
         "toHour": 10
     },
     {
@@ -21,9 +35,30 @@
         "toHour": 17
     },
     {
+        "id": "GAFTERNOON_ALT",
+        "text": "Schönen Tag dir",
+        "sfSymbol": "sun.max",
+        "fromHour": 12,
+        "toHour": 17
+    },
+    {
+        "id": "GLATE_AFTERNOON",
+        "text": "Schönen Nachmittag",
+        "sfSymbol": "sun.max",
+        "fromHour": 15,
+        "toHour": 18
+    },
+    {
         "id": "GEVENING",
         "text": "Guten Abend",
         "sfSymbol": "sunset.fill",
+        "fromHour": 17,
+        "toHour": 21
+    },
+    {
+        "id": "GEVENING_ALT",
+        "text": "Schönen Abend",
+        "sfSymbol": "sunset",
         "fromHour": 17,
         "toHour": 21
     },
@@ -33,6 +68,13 @@
         "sfSymbol": "moon.stars.fill",
         "fromHour": 21,
         "toHour": 5
+    },
+    {
+        "id": "GWEEKEND",
+        "text": "Schönes Wochenende",
+        "sfSymbol": "calendar",
+        "fromHour": 9,
+        "toHour": 18
     },
     {
         "id": "GENERIC",

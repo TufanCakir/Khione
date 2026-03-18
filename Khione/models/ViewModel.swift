@@ -54,11 +54,13 @@ final class ViewModel: ObservableObject {
 
     var greeting: Greeting {
 
-        greetings.first(where: {
+        if greetings.isEmpty {
+            print("⚠️ Greetings EMPTY → fallback triggered")
+        }
 
-            $0.isValidNow()
-
-        }) ?? Greeting.fallback()
+        return greetings.first(where: { $0.isValidNow() })
+            ?? greetings.first(where: { $0.id == "GENERIC" })
+            ?? Greeting.fallback()
     }
 
     func reloadLocalizations(language: String) {
@@ -68,10 +70,11 @@ final class ViewModel: ObservableObject {
                 language: language
             )
 
-        greetings =
-            Bundle.main.loadGreetings(
-                language: language
-            )
+        print("🔄 Reload localizations with:", language)
+
+        greetings = Bundle.main.loadGreetings(language: language)
+
+        print("📦 Loaded greetings:", greetings.map { $0.id })
 
         if let current = selectedReplyStyle,
             let match = replyStyles.first(where: {

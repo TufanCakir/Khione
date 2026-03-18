@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct ChatBubbleView: View {
-
+    
     let message: ChatMessage
-
+    
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
             if message.role == .assistant {
@@ -28,85 +28,94 @@ struct ChatBubbleView: View {
             alignment: message.role == .user ? .trailing : .leading
         )
     }
-
+    
     // MARK: - Bubble
     private var bubble: some View {
         VStack(alignment: .leading, spacing: 10) {
-
-            // 🖼 Image (adaptive, no hard max)
+            
+            // 🖼 Image
             if let image = message.image {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxWidth: 280, maxHeight: 240)
+                    .frame(maxWidth: 260, maxHeight: 220)
                     .clipped()
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    )
-                    .accessibilityLabel(Text("Attached image"))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
             }
-
-            // ✨ Emoji / Symbol Header (subtle)
+            
+            // ✨ Optional Header
             if message.emoji != nil || message.leadingSymbol != nil {
                 HStack(spacing: 6) {
                     if let emoji = message.emoji {
                         Text(emoji)
-                            .font(.body)
                     }
-
+                    
                     if let symbol = message.leadingSymbol {
                         Image(systemName: symbol)
-                            .font(.body)
                             .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
                     }
                 }
-                .padding(.bottom, 2)
+                .font(.caption)
             }
-
-            // 👋 Greeting (kept as-is)
+            
+            // 👋 Greeting
             if message.kind == .greeting {
                 TypingGreetingView(text: message.text ?? "")
-                    .transition(.opacity.combined(with: .move(edge: .leading)))
             }
-
-            // 💻 Code Block
-            if message.isCode {
+            
+            // 💻 Code
+            else if message.isCode {
                 CodeBlockView(
                     code: extractCode(from: message.text ?? ""),
                     canCopy: true
                 )
             }
-            // 💬 Text (Dynamic Type friendly)
+            
+            // 💬 Text
             else if let text = message.text {
                 Text(.init(text))
                     .font(.body)
                     .foregroundStyle(textForeground)
                     .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel(Text(text))
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .background(
-            bubbleBackground,
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            bubbleBackground
         )
         .overlay(bubbleBorder)
+        .clipShape(bubbleShape)
+        .shadow(color: shadowColor, radius: 6, y: 2)
         .frame(
-            maxWidth: 360,
+            maxWidth: 320,
             alignment: message.role == .user ? .trailing : .leading
         )
-        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+    
+    private var bubbleShape: some Shape {
+        UnevenRoundedRectangle(
+            cornerRadii: message.role == .user
+            ? .init(topLeading: 18, bottomLeading: 18, bottomTrailing: 4, topTrailing: 18)
+            : .init(topLeading: 18, bottomLeading: 4, bottomTrailing: 18, topTrailing: 18)
+        )
     }
 
     // MARK: - Background (system-first)
     private var bubbleBackground: some ShapeStyle {
         if message.role == .user {
-            return AnyShapeStyle(Color.accentColor)
+            return AnyShapeStyle(
+                LinearGradient(
+                    colors: [
+                        Color.accentColor,
+                        Color.accentColor.opacity(0.8)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
         } else {
-            return AnyShapeStyle(.thinMaterial)
+            return AnyShapeStyle(.ultraThinMaterial)
         }
     }
 
@@ -114,14 +123,22 @@ struct ChatBubbleView: View {
     @ViewBuilder
     private var bubbleBorder: some View {
         if message.role == .assistant {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(.separator.opacity(0.6), lineWidth: 1)
+            bubbleShape
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
         }
+    }
+    
+    private var shadowColor: Color {
+        message.role == .user
+        ? Color.accentColor.opacity(0.25)
+        : Color.black.opacity(0.08)
     }
 
     // MARK: - Styling
     private var textForeground: some ShapeStyle {
-        message.role == .user ? AnyShapeStyle(.white) : AnyShapeStyle(.primary)
+        message.role == .user
+            ? AnyShapeStyle(.white)
+            : AnyShapeStyle(.primary)
     }
 
     // MARK: - Helpers

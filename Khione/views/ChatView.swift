@@ -60,17 +60,12 @@ struct ChatView: View {
 
             VStack(spacing: 16) {
                 messagesArea
-
                 attachmentPreview
+                footerBar
+                    .padding()
             }
             .contentShape(Rectangle())
             .onTapGesture { dismissInput() }
-            .safeAreaInset(edge: .bottom) {
-                footerBar
-                    .padding()
-                    .background(.ultraThinMaterial)
-            }
-
             .animation(
                 .spring(response: 0.3, dampingFraction: 0.8),
                 value: canSend
@@ -143,12 +138,11 @@ struct ChatView: View {
                         }
                     }
                 } label: {
-                    HStack(alignment: .bottom, spacing: 10) {
-                        Text(viewModel.selectedMode?.name ?? "Taenttra").font(
+                    HStack(alignment: .bottom, spacing: 16) {
+                        Text(viewModel.selectedMode?.name ?? "Khione").font(
                             .headline
                         )
                         Image(systemName: "chevron.down").font(.caption)
-                            .foregroundColor(.secondary)
                     }
                 }
             }
@@ -190,8 +184,7 @@ struct ChatView: View {
                         ProgressView(text.thinking).padding(.top).id("typing")
                     }
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal)
+                .padding()
             }
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy)
@@ -210,44 +203,30 @@ struct ChatView: View {
             )
 
         return greetings.first(where: { $0.isValidNow() })
+            ?? greetings.first(where: { $0.id == "GENERIC" })
             ?? Greeting.fallback()
     }
 
     private var centerGreeting: some View {
         let clean = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        let greeting = currentGreeting
+        let greeting = viewModel.greeting
 
         let title =
             clean.isEmpty
             ? greeting.text
-            : String(format: text.welcomeWithName, clean)
+            : "\(greeting.text), \(clean)"
 
         return VStack(spacing: 16) {
 
-            Image(systemName: greeting.sfSymbol ?? "cpu")
-                .symbolRenderingMode(.hierarchical)
-                .font(.system(.largeTitle, design: .rounded))
+            Image(systemName: greeting.sfSymbol ?? "snowflake")
+                .font(.system(size: 30, weight: .semibold, design: .rounded))
                 .foregroundStyle(themeManager.accentColor)
-                .shadow(
-                    color: themeManager.accentColor.opacity(0.35),
-                    radius: 14
-                )
                 .transition(.scale.combined(with: .opacity))
 
             Text(title)
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 40)
+                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                .foregroundStyle(themeManager.accentColor)
         }
-        .padding(.vertical, 40)
-        .padding(.horizontal)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.08), radius: 14, x: 0, y: 8)
-        )
-        .padding()
     }
 
     // MARK: - Footer Switch
@@ -263,75 +242,67 @@ struct ChatView: View {
         } else if canSend {
             sendButton
                 .transition(.scale.combined(with: .opacity))
+                .padding(.horizontal)
         }
     }
 
     // MARK: - Chat Footer
     private var chatFooter: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 8) {
 
-            // INPUT ROW
-            HStack(alignment: .bottom, spacing: 8) {
+            // 🔹 INPUT + SEND
+            ZStack(alignment: .bottomTrailing) {
 
                 TextField(
                     text.messagePlaceholder,
                     text: $inputText,
                     axis: .vertical
                 )
-
                 .focused($isInputFocused)
                 .lineLimit(1...5)
-                .textFieldStyle(.roundedBorder)
-
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(.white.opacity(0.08))
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
                 )
-                .opacity(showInlineLimitHint ? 0.35 : 1)
-                .disabled(showInlineLimitHint)
 
-                actionButton
+                if viewModel.isProcessing {
+                    stopButton
+                        .padding(8)
+                } else if canSend {
+                    Button(action: handleSend) {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 14, weight: .bold))
+                            .frame(width: 30, height: 30)
+                            .background(.white)
+                            .foregroundColor(.black)
+                            .clipShape(Circle())
+                    }
+                    .padding(10)
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
 
-            // TOOL ROW
-            HStack(spacing: 20) {
+            // 🔹 TOOL ROW (JETZT DIREKT DRUNTER)
+            HStack(spacing: 12) {
                 attachmentButton
                 replyStyleButton
                 speechButton
                 Spacer()
-
             }
+            .padding(.horizontal, 4)
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20)
                 .fill(.ultraThinMaterial)
-                .overlay(
-                    Rectangle()
-                        .fill(.white.opacity(0.08))
-                        .frame(height: 1)
-                        .frame(maxHeight: .infinity, alignment: .top)
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 22,
-                                style: .continuous
-                            )
-                        )
-                )
-                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 4)
         )
     }
+        
 
     private func iconButton(_ system: String) -> some View {
         Image(systemName: system)
-            .symbolRenderingMode(.hierarchical)
-            .font(.title3)
-            .foregroundStyle(themeManager.accentColor)  // ← 💎 Theme hier!
-            .controlSize(.regular)
-            .buttonStyle(.bordered)
-
-            .background(.thinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .foregroundStyle(.white) 
     }
 
     private var replyStyleButton: some View {
@@ -340,13 +311,14 @@ struct ChatView: View {
                 Button {
                     viewModel.selectedReplyStyle = style
                 } label: {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 16) {
                         Image(systemName: style.icon)
                             .foregroundStyle(
                                 viewModel.selectedReplyStyle?.id == style.id
                                     ? themeManager.accentColor
                                     : .secondary
                             )
+                   
 
                         Text(style.name)
                     }
@@ -461,11 +433,6 @@ struct ChatView: View {
             iconButton(speech.isRecording ? "stop.fill" : "mic.fill")
                 .foregroundStyle(speech.isRecording ? .red : .primary)
         }
-        .animatedFocusBorder(
-            active: speech.isRecording,
-            lineWidth: 2,
-            radius: 14
-        )
         .onChange(of: viewModel.selectedMode?.id) { _, _ in
             if speech.isRecording { speech.stop() }
         }

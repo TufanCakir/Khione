@@ -19,8 +19,8 @@ struct Greeting: Codable, Identifiable {
     func isValidNow() -> Bool {
 
         guard let from = fromHour,
-            let to = toHour
-        else { return true }
+              let to = toHour
+        else { return true } // ← WICHTIG
 
         let hour = Calendar.current.component(.hour, from: Date())
 
