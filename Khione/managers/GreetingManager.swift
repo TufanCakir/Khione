@@ -2,7 +2,7 @@
 //  GreetingManager.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 02.01.26.
+//  Created by Tufan Cakir on 18.12.25.
 //
 
 import Foundation
@@ -25,12 +25,11 @@ enum GreetingManager {
         UserDefaults.standard.removeObject(forKey: key)
     }
 
-
     // MARK: - Greeting Logic
 
     static func currentGreeting(language: String) -> Greeting {
 
-        let normalized = String(language.prefix(2)) // 🔥 wichtig
+        let normalized = String(language.prefix(2))  // 🔥 wichtig
 
         let greetings = Bundle.main.loadGreetings(language: normalized)
 

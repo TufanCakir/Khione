@@ -2,7 +2,7 @@
 //  ChatRouter.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 02.01.26.
+//  Created by Tufan Cakir on 18.12.25.
 //
 
 import SwiftUI
@@ -19,7 +19,7 @@ struct ChatRouter: View {
             if store.activeID != nil {
 
                 ChatView(chatStore: store)
-                    .id(store.activeID)  // ⭐⭐⭐⭐⭐ MAGIC FIX
+                    .id(store.activeID)
 
             }
         }

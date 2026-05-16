@@ -2,6 +2,8 @@
 //  KhioneApp.swift
 //  Khione
 //
+//  Created by Tufan Cakir on 18.12.25.
+//
 
 import SwiftUI
 

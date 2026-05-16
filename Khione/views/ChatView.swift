@@ -2,11 +2,12 @@
 //  ChatView.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 14.12.25.
+//  Created by Tufan Cakir on 18.12.25.
 //
 
 import ImagePlayground
 import SwiftUI
+import UIKit
 
 struct ChatView: View {
 
@@ -17,6 +18,8 @@ struct ChatView: View {
 
     @EnvironmentObject private var themeManager: ThemeManager
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
 
     @State private var inputText = ""
     @State private var selectedImage: UIImage?
@@ -30,6 +33,12 @@ struct ChatView: View {
     @AppStorage("language")
     private var language =
         Locale.current.language.languageCode?.identifier ?? "en"
+    @AppStorage("accessibilityCompactMode") private var compactMode = true
+    @AppStorage("accessibilityLargeChatText") private var largeChatText = false
+    @AppStorage("accessibilityReduceAnimations")
+    private var reduceAnimations = false
+    @AppStorage("accessibilityAlwaysShowSendButton")
+    private var alwaysShowSendButton = false
 
     private var text: ViewLocalization {
         Bundle.main.loadKhioneViewLocalization(language: language)
@@ -58,16 +67,19 @@ struct ChatView: View {
 
             Color.white.opacity(0.02).ignoresSafeArea()
 
-            VStack(spacing: 16) {
+            VStack(spacing: mainSpacing) {
                 messagesArea
                 attachmentPreview
                 footerBar
-                    .padding()
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, bottomPadding)
             }
             .contentShape(Rectangle())
             .onTapGesture { dismissInput() }
             .animation(
-                .spring(response: 0.3, dampingFraction: 0.8),
+                shouldReduceMotion
+                    ? nil
+                    : .spring(response: 0.3, dampingFraction: 0.8),
                 value: canSend
             )
         }
@@ -109,7 +121,9 @@ struct ChatView: View {
             }
         }
         .onChange(of: inputText) { _, _ in
-            withAnimation { viewModel.removeGreetingIfNeeded() }
+            withOptionalAnimation {
+                viewModel.removeGreetingIfNeeded()
+            }
         }
         .onChange(of: language) { _, newLanguage in
             viewModel.reloadLocalizations(language: newLanguage)
@@ -119,6 +133,9 @@ struct ChatView: View {
         }
         .onChange(of: speech.transcript) { _, newValue in
             if speech.isRecording { inputText = newValue }
+        }
+        .onChange(of: viewModel.isProcessing) { _, isProcessing in
+            announceProcessingStatus(isProcessing)
         }
         .onDisappear {
             dismissInput(animated: false)
@@ -145,6 +162,9 @@ struct ChatView: View {
                         Image(systemName: "chevron.down").font(.caption)
                     }
                 }
+                .accessibilityLabel(a11yModeLabel)
+                .accessibilityHint(a11yModeHint)
+                .accessibilityValue(viewModel.selectedMode?.name ?? "Khione")
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -155,6 +175,8 @@ struct ChatView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel(a11yNewChatLabel)
+                .accessibilityHint(a11yNewChatHint)
             }
         }
     }
@@ -175,16 +197,19 @@ struct ChatView: View {
     private var messagesList: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: 16) {
+                LazyVStack(spacing: messageSpacing) {
                     ForEach(viewModel.messages) { message in
                         ChatBubbleView(message: message).id(message.id)
                     }
 
                     if viewModel.isProcessing {
-                        ProgressView(text.thinking).padding(.top).id("typing")
+                        ProgressView(text.thinking)
+                            .padding(.top, 6)
+                            .id("typing")
                     }
                 }
-                .padding()
+                .padding(.horizontal, horizontalPadding)
+                .padding(.vertical, verticalPadding)
             }
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy)
@@ -216,15 +241,27 @@ struct ChatView: View {
             ? greeting.text
             : "\(greeting.text), \(clean)"
 
-        return VStack(spacing: 16) {
+        return VStack(spacing: compactMode ? 10 : 14) {
 
             Image(systemName: greeting.sfSymbol ?? "snowflake")
-                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                .font(
+                    .system(
+                        size: largeChatText ? 30 : 26,
+                        weight: .semibold,
+                        design: .rounded
+                    )
+                )
                 .foregroundStyle(themeManager.accentColor)
                 .transition(.scale.combined(with: .opacity))
 
             Text(title)
-                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                .font(
+                    .system(
+                        size: largeChatText ? 30 : 26,
+                        weight: .semibold,
+                        design: .rounded
+                    )
+                )
                 .foregroundStyle(themeManager.accentColor)
         }
     }
@@ -248,9 +285,8 @@ struct ChatView: View {
 
     // MARK: - Chat Footer
     private var chatFooter: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: compactMode ? 6 : 10) {
 
-            // 🔹 INPUT + SEND
             ZStack(alignment: .bottomTrailing) {
 
                 TextField(
@@ -259,50 +295,58 @@ struct ChatView: View {
                     axis: .vertical
                 )
                 .focused($isInputFocused)
-                .lineLimit(1...5)
-                .padding()
+                .accessibilityLabel(a11yMessageFieldLabel)
+                .accessibilityHint(a11yMessageFieldHint)
+                .lineLimit(1...4)
+                .font(largeChatText ? .title3 : .body)
+                .padding(.vertical, compactMode ? 10 : 12)
+                .padding(.leading, compactMode ? 12 : 14)
+                .padding(.trailing, 46)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(.ultraThinMaterial)
                 )
 
                 if viewModel.isProcessing {
                     stopButton
-                        .padding(8)
-                } else if canSend {
+                        .padding(6)
+                } else if canSend || alwaysShowSendButton {
                     Button(action: handleSend) {
                         Image(systemName: "arrow.up")
                             .font(.system(size: 14, weight: .bold))
-                            .frame(width: 30, height: 30)
-                            .background(.white)
-                            .foregroundColor(.black)
+                            .frame(width: 28, height: 28)
+                            .background(sendButtonBackground)
+                            .foregroundColor(sendButtonForeground)
                             .clipShape(Circle())
                     }
-                    .padding(10)
+                    .frame(width: 44, height: 44)
+                    .disabled(!canSend)
+                    .accessibilityLabel(a11ySendLabel)
+                    .accessibilityHint(a11ySendHint)
                     .transition(.scale.combined(with: .opacity))
                 }
             }
 
-            // 🔹 TOOL ROW (JETZT DIREKT DRUNTER)
-            HStack(spacing: 12) {
+            HStack(spacing: compactMode ? 8 : 12) {
                 attachmentButton
                 replyStyleButton
                 speechButton
                 Spacer()
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 2)
         }
-        .padding()
+        .padding(compactMode ? 10 : 14)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
     }
-        
 
     private func iconButton(_ system: String) -> some View {
         Image(systemName: system)
-            .foregroundStyle(.white) 
+            .font(.system(size: 15, weight: .semibold))
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
     }
 
     private var replyStyleButton: some View {
@@ -311,14 +355,13 @@ struct ChatView: View {
                 Button {
                     viewModel.selectedReplyStyle = style
                 } label: {
-                    HStack(spacing: 16) {
+                    HStack(spacing: 12) {
                         Image(systemName: style.icon)
                             .foregroundStyle(
                                 viewModel.selectedReplyStyle?.id == style.id
                                     ? themeManager.accentColor
                                     : .secondary
                             )
-                   
 
                         Text(style.name)
                     }
@@ -327,6 +370,9 @@ struct ChatView: View {
         } label: {
             iconButton(viewModel.selectedReplyStyle?.icon ?? "wand.and.stars")
         }
+        .accessibilityLabel(a11yReplyStyleLabel)
+        .accessibilityHint(a11yReplyStyleHint)
+        .accessibilityValue(viewModel.selectedReplyStyle?.name ?? "")
     }
 
     private func formatInline(_ interval: TimeInterval) -> String {
@@ -337,7 +383,9 @@ struct ChatView: View {
 
     private func dismissInput(animated: Bool = true) {
         if animated {
-            withAnimation(.easeOut(duration: 0.2)) { isInputFocused = false }
+            withAnimation(shouldReduceMotion ? nil : .easeOut(duration: 0.2)) {
+                isInputFocused = false
+            }
         } else {
             isInputFocused = false
         }
@@ -349,10 +397,10 @@ struct ChatView: View {
 
     // MARK: - Image Footer
     private var imageFooter: some View {
-        VStack(spacing: 16) {
-            VStack(spacing: 16) {
+        VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 Image(systemName: "apple.image.playground")
-                    .font(.system(size: 44))
+                    .font(.system(size: 36))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
 
@@ -374,14 +422,14 @@ struct ChatView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .accessibilityHint(a11yImagePlaygroundHint)
         }
-        .padding()
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
         )
-        .padding(.horizontal)
     }
 
     // MARK: - Buttons
@@ -391,6 +439,8 @@ struct ChatView: View {
         } label: {
             iconButton("plus")
         }
+        .accessibilityLabel(a11yAttachmentLabel)
+        .accessibilityHint(a11yAttachmentHint)
     }
 
     private var sendButton: some View {
@@ -402,6 +452,8 @@ struct ChatView: View {
         }
         .buttonStyle(.borderedProminent)
         .disabled(!canSend)
+        .accessibilityLabel(a11ySendLabel)
+        .accessibilityHint(a11ySendHint)
     }
 
     private var stopButton: some View {
@@ -410,11 +462,13 @@ struct ChatView: View {
         } label: {
             Image(systemName: "xmark")
                 .font(.title3)
-                .frame(width: 36, height: 36)
+                .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.bordered)
         .tint(.red)
+        .accessibilityLabel(a11yStopLabel)
+        .accessibilityHint(a11yStopHint)
     }
 
     private var speechButton: some View {
@@ -433,6 +487,8 @@ struct ChatView: View {
             iconButton(speech.isRecording ? "stop.fill" : "mic.fill")
                 .foregroundStyle(speech.isRecording ? .red : .primary)
         }
+        .accessibilityLabel(a11ySpeechLabel)
+        .accessibilityHint(a11ySpeechHint)
         .onChange(of: viewModel.selectedMode?.id) { _, _ in
             if speech.isRecording { speech.stop() }
         }
@@ -446,26 +502,29 @@ struct ChatView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 80, height: 80)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
 
                 Button {
                     selectedImage = nil
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title2)
+                        .frame(width: 44, height: 44)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityLabel(a11yRemoveImageLabel)
+                .accessibilityHint(a11yRemoveImageHint)
 
                 Spacer()
             }
-            .padding()
+            .padding(10)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
             )
-            .padding(.horizontal)
+            .padding(.horizontal, 12)
         }
     }
 
@@ -493,10 +552,179 @@ struct ChatView: View {
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         if let last = viewModel.messages.last {
-            withAnimation(.easeOut(duration: 0.25)) {
+            withAnimation(shouldReduceMotion ? nil : .easeOut(duration: 0.25)) {
                 proxy.scrollTo(last.id, anchor: .bottom)
             }
         }
+    }
+}
+
+extension ChatView {
+
+    fileprivate var isGerman: Bool { language == "de" }
+
+    fileprivate var shouldReduceMotion: Bool {
+        reduceMotion || reduceAnimations
+    }
+
+    fileprivate var mainSpacing: CGFloat {
+        compactMode ? 8 : 14
+    }
+
+    fileprivate var messageSpacing: CGFloat {
+        compactMode ? 10 : 14
+    }
+
+    fileprivate var horizontalPadding: CGFloat {
+        compactMode ? 12 : 16
+    }
+
+    fileprivate var verticalPadding: CGFloat {
+        compactMode ? 8 : 12
+    }
+
+    fileprivate var bottomPadding: CGFloat {
+        compactMode ? 8 : 12
+    }
+
+    fileprivate var sendButtonBackground: Color {
+        if !canSend {
+            return Color.secondary.opacity(0.25)
+        }
+
+        return colorSchemeContrast == .increased ? .primary : .white
+    }
+
+    fileprivate var sendButtonForeground: Color {
+        if !canSend {
+            return .secondary
+        }
+
+        return colorSchemeContrast == .increased
+            ? Color(.systemBackground)
+            : .black
+    }
+
+    fileprivate func withOptionalAnimation(_ updates: () -> Void) {
+        if shouldReduceMotion {
+            updates()
+        } else {
+            withAnimation {
+                updates()
+            }
+        }
+    }
+
+    fileprivate func announceProcessingStatus(_ isProcessing: Bool) {
+        let message: String
+
+        if isProcessing {
+            message = isGerman ? "Khione denkt" : "Khione is thinking"
+        } else {
+            message = isGerman ? "Antwort erhalten" : "Response received"
+        }
+
+        UIAccessibility.post(notification: .announcement, argument: message)
+    }
+
+    fileprivate var a11yModeLabel: String {
+        isGerman ? "Modus auswählen" : "Choose mode"
+    }
+
+    fileprivate var a11yModeHint: String {
+        isGerman
+            ? "Ändert den Modus für die nächste Nachricht."
+            : "Changes the mode for the next message."
+    }
+
+    fileprivate var a11yNewChatLabel: String {
+        isGerman ? "Neuer Chat" : "New chat"
+    }
+
+    fileprivate var a11yNewChatHint: String {
+        isGerman
+            ? "Startet eine neue Unterhaltung."
+            : "Starts a new conversation."
+    }
+
+    fileprivate var a11ySendLabel: String {
+        isGerman ? "Nachricht senden" : "Send message"
+    }
+
+    fileprivate var a11yMessageFieldLabel: String {
+        isGerman ? "Nachricht" : "Message"
+    }
+
+    fileprivate var a11yMessageFieldHint: String {
+        isGerman
+            ? "Gib eine Nachricht an Khione ein."
+            : "Enter a message for Khione."
+    }
+
+    fileprivate var a11ySendHint: String {
+        isGerman
+            ? "Sendet deine aktuelle Eingabe an Khione."
+            : "Sends your current input to Khione."
+    }
+
+    fileprivate var a11yStopLabel: String {
+        isGerman ? "Antwort stoppen" : "Stop response"
+    }
+
+    fileprivate var a11yStopHint: String {
+        isGerman
+            ? "Bricht die laufende Antwort ab."
+            : "Cancels the current response."
+    }
+
+    fileprivate var a11yAttachmentLabel: String {
+        isGerman ? "Bild anhängen" : "Attach image"
+    }
+
+    fileprivate var a11yAttachmentHint: String {
+        isGerman
+            ? "Öffnet die Bildauswahl."
+            : "Opens the image picker."
+    }
+
+    fileprivate var a11yReplyStyleLabel: String {
+        isGerman ? "Antwortstil auswählen" : "Choose reply style"
+    }
+
+    fileprivate var a11yReplyStyleHint: String {
+        isGerman
+            ? "Ändert den Ton der Antwort."
+            : "Changes the tone of the response."
+    }
+
+    fileprivate var a11ySpeechLabel: String {
+        if speech.isRecording {
+            return isGerman ? "Spracheingabe stoppen" : "Stop dictation"
+        }
+
+        return isGerman ? "Spracheingabe starten" : "Start dictation"
+    }
+
+    fileprivate var a11ySpeechHint: String {
+        isGerman
+            ? "Startet oder stoppt die Spracheingabe."
+            : "Starts or stops voice input."
+    }
+
+    fileprivate var a11yImagePlaygroundHint: String {
+        isGerman
+            ? "Öffnet Apple Image Playground für Bilder."
+            : "Opens Apple Image Playground for images."
+    }
+
+    fileprivate var a11yRemoveImageLabel: String {
+        isGerman ? "Bild entfernen" : "Remove image"
+    }
+
+    fileprivate var a11yRemoveImageHint: String {
+        isGerman
+            ? "Entfernt das angehängte Bild aus der Nachricht."
+            : "Removes the attached image from the message."
     }
 }
 

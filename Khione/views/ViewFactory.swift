@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum AppRoute {
-    case account
+    case settings
 }
 
 @MainActor
@@ -17,8 +17,8 @@ struct ViewFactory {
     @ViewBuilder
     static func view(for route: AppRoute) -> some View {
         switch route {
-        case .account:
-            AccountView()
+        case .settings:
+            SettingsView()
         }
     }
 }

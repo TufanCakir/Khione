@@ -1,8 +1,8 @@
 //
-//  Bundle+AppVersion.swift.swift
+//  Bundle+AppVersion.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 21.02.26.
+//  Created by Tufan Cakir on 18.12.25.
 //
 
 import Foundation

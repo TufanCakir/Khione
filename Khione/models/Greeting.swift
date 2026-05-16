@@ -2,7 +2,7 @@
 //  Greeting.swift
 //  Khione
 //
-//  Created by Tufan Cakir on 02.01.26.
+//  Created by Tufan Cakir on 18.12.25.
 //
 
 import Foundation
@@ -19,8 +19,8 @@ struct Greeting: Codable, Identifiable {
     func isValidNow() -> Bool {
 
         guard let from = fromHour,
-              let to = toHour
-        else { return true } // ← WICHTIG
+            let to = toHour
+        else { return true }  // ← WICHTIG
 
         let hour = Calendar.current.component(.hour, from: Date())
 
