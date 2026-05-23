@@ -11,6 +11,7 @@ import SwiftUI
 struct ChatRouter: View {
 
     @ObservedObject var store: ChatStore
+    @Binding var pendingSharedPrompt: String?
 
     var body: some View {
 
@@ -18,9 +19,11 @@ struct ChatRouter: View {
 
             if store.activeID != nil {
 
-                ChatView(chatStore: store)
-                    .id(store.activeID)
-
+                ChatView(
+                    chatStore: store,
+                    pendingSharedPrompt: $pendingSharedPrompt
+                )
+                .id(store.activeID)
             }
         }
     }

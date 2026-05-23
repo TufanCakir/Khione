@@ -15,6 +15,7 @@ struct ChatView: View {
     @StateObject private var viewModel = ViewModel()
     @StateObject private var speech = SpeechRecognizer()
     @ObservedObject var chatStore: ChatStore
+    @Binding private var pendingSharedPrompt: String?
 
     @EnvironmentObject private var themeManager: ThemeManager
     @Environment(\.scenePhase) private var scenePhase
@@ -44,6 +45,14 @@ struct ChatView: View {
         Bundle.main.loadKhioneViewLocalization(language: language)
     }
 
+    init(
+        chatStore: ChatStore,
+        pendingSharedPrompt: Binding<String?> = .constant(nil)
+    ) {
+        self.chatStore = chatStore
+        self._pendingSharedPrompt = pendingSharedPrompt
+    }
+
     // MARK: - Computed
     private var isImageMode: Bool {
         viewModel.selectedMode?.id == "image"
@@ -57,8 +66,6 @@ struct ChatView: View {
         return !inputText.trimmingCharacters(in: .whitespacesAndNewlines)
             .isEmpty
     }
-
-    private var showInlineLimitHint: Bool { false }
 
     // MARK: - Body
     var body: some View {
@@ -119,6 +126,8 @@ struct ChatView: View {
             viewModel.onMessagesChanged = { newMessages in
                 chatStore.update(messages: newMessages)
             }
+
+            consumePendingSharedPrompt()
         }
         .onChange(of: inputText) { _, _ in
             withOptionalAnimation {
@@ -133,6 +142,9 @@ struct ChatView: View {
         }
         .onChange(of: speech.transcript) { _, newValue in
             if speech.isRecording { inputText = newValue }
+        }
+        .onChange(of: pendingSharedPrompt) { _, _ in
+            consumePendingSharedPrompt()
         }
         .onChange(of: viewModel.isProcessing) { _, isProcessing in
             announceProcessingStatus(isProcessing)
@@ -220,18 +232,6 @@ struct ChatView: View {
         }
     }
 
-    private var currentGreeting: Greeting {
-
-        let greetings =
-            Bundle.main.loadGreetings(
-                language: language
-            )
-
-        return greetings.first(where: { $0.isValidNow() })
-            ?? greetings.first(where: { $0.id == "GENERIC" })
-            ?? Greeting.fallback()
-    }
-
     private var centerGreeting: some View {
         let clean = username.trimmingCharacters(in: .whitespacesAndNewlines)
         let greeting = viewModel.greeting
@@ -270,17 +270,6 @@ struct ChatView: View {
     @ViewBuilder
     private var footerBar: some View {
         isImageMode ? AnyView(imageFooter) : AnyView(chatFooter)
-    }
-
-    @ViewBuilder
-    private var actionButton: some View {
-        if viewModel.isProcessing {
-            stopButton
-        } else if canSend {
-            sendButton
-                .transition(.scale.combined(with: .opacity))
-                .padding(.horizontal)
-        }
     }
 
     // MARK: - Chat Footer
@@ -375,12 +364,6 @@ struct ChatView: View {
         .accessibilityValue(viewModel.selectedReplyStyle?.name ?? "")
     }
 
-    private func formatInline(_ interval: TimeInterval) -> String {
-        let m = Int(interval) / 60
-        let s = Int(interval) % 60
-        return String(format: "%02dm %02ds", m, s)
-    }
-
     private func dismissInput(animated: Bool = true) {
         if animated {
             withAnimation(shouldReduceMotion ? nil : .easeOut(duration: 0.2)) {
@@ -441,19 +424,6 @@ struct ChatView: View {
         }
         .accessibilityLabel(a11yAttachmentLabel)
         .accessibilityHint(a11yAttachmentHint)
-    }
-
-    private var sendButton: some View {
-        Button(action: handleSend) {
-            Image(systemName: "arrow.up")
-                .font(.title3)
-                .contentShape(Rectangle())
-
-        }
-        .buttonStyle(.borderedProminent)
-        .disabled(!canSend)
-        .accessibilityLabel(a11ySendLabel)
-        .accessibilityHint(a11ySendHint)
     }
 
     private var stopButton: some View {
@@ -548,6 +518,16 @@ struct ChatView: View {
 
         inputText = ""
         selectedImage = nil
+    }
+
+    private func consumePendingSharedPrompt() {
+        guard let prompt = pendingSharedPrompt?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ), !prompt.isEmpty else { return }
+
+        inputText = prompt
+        pendingSharedPrompt = nil
+        isInputFocused = true
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
@@ -725,38 +705,6 @@ extension ChatView {
         isGerman
             ? "Entfernt das angehängte Bild aus der Nachricht."
             : "Removes the attached image from the message."
-    }
-}
-
-// MARK: - RefillCountdownView
-
-struct RefillCountdownView: View {
-    let nextRefillDate: Date
-    let localizedTemplate: String
-
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            let remaining = max(
-                nextRefillDate.timeIntervalSince(context.date),
-                0
-            )
-            Text(String(format: localizedTemplate, format(remaining)))
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-
-    private func format(_ interval: TimeInterval) -> String {
-        let totalSeconds = Int(interval)
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-
-        if hours > 0 {
-            return String(format: "%02dh %02dm %02ds", hours, minutes, seconds)
-        } else {
-            return String(format: "%02dm %02ds", minutes, seconds)
-        }
     }
 }
 

@@ -53,11 +53,6 @@ final class ViewModel: ObservableObject {
     }
 
     var greeting: Greeting {
-
-        if greetings.isEmpty {
-            print("⚠️ Greetings EMPTY → fallback triggered")
-        }
-
         return greetings.first(where: { $0.isValidNow() })
             ?? greetings.first(where: { $0.id == "GENERIC" })
             ?? Greeting.fallback()
@@ -70,11 +65,7 @@ final class ViewModel: ObservableObject {
                 language: language
             )
 
-        print("🔄 Reload localizations with:", language)
-
         greetings = Bundle.main.loadGreetings(language: language)
-
-        print("📦 Loaded greetings:", greetings.map { $0.id })
 
         if let current = selectedReplyStyle,
             let match = replyStyles.first(where: {
@@ -182,30 +173,6 @@ final class ViewModel: ObservableObject {
         blocks.append(history)
 
         return blocks.joined(separator: "\n\n")
-    }
-
-    private func conversationHistoryWithoutLastUser() -> String {
-        messages
-            .dropLast()
-            .suffix(16)
-            .map { msg in
-                "\(msg.role == .user ? "User" : "Assistant"):\n\(msg.text ?? "")"
-            }
-            .joined(separator: "\n\n")
-    }
-
-    private func currentUserPrompt() -> String {
-        guard let last = messages.last, last.role == .user else { return "" }
-        return """
-            User:
-            \(last.text ?? "")
-            """
-    }
-
-    private func conversationHistory() -> String {
-        messages.suffix(16).map {
-            "\( $0.role == .user ? "User" : "Assistant"):\n\($0.text ?? "")"
-        }.joined(separator: "\n\n")
     }
 
     private func systemPrompt() -> String {
