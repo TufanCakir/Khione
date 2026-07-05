@@ -71,13 +71,8 @@ struct ChatBubbleView: View {
                 .font(.caption)
             }
 
-            // 👋 Greeting
-            if message.kind == .greeting {
-                TypingGreetingView(text: message.text ?? "")
-            }
-
             // 💻 Code
-            else if message.isCode {
+            if message.isCode {
                 CodeBlockView(
                     code: extractCode(from: message.text ?? ""),
                     canCopy: true

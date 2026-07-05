@@ -1,0 +1,199 @@
+{
+    "subscription_group_id": "group.khione.membership",
+    "plans": [
+        {
+            "id": "standard",
+            "kind": "free",
+            "product_id": null,
+            "title": {
+                "de": "Standard",
+                "en": "Standard"
+            },
+            "subtitle": {
+                "de": "Kostenlos starten",
+                "en": "Start for free"
+            },
+            "badge": {
+                "de": "Kostenlos",
+                "en": "Free"
+            },
+            "limits": {
+                "daily_chat_limit": 25,
+                "history_messages": 0,
+                "can_send_images": false,
+                "can_use_image_mode": false,
+                "can_use_voice_input": false,
+                "can_use_reply_styles": false
+            },
+            "features": {
+                "de": [
+                    "Basis-Chat mit täglichem Limit",
+                    "Ohne Chatverlauf",
+                    "Keine Spracheingabe",
+                    "Nur Chat-Modus",
+                    "Keine Antwortstile",
+                    "Keine Bildanhänge",
+                    "Kein Bildmodus"
+                ],
+                "en": [
+                    "Basic chat with daily limit",
+                    "No chat history",
+                    "No voice input",
+                    "Chat mode only",
+                    "No reply styles",
+                    "No image attachments",
+                    "No image mode"
+                ]
+            }
+        },
+        {
+            "id": "pro",
+            "kind": "auto_renewable",
+            "product_id": "khione.pro.monthly",
+            "title": {
+                "de": "Pro",
+                "en": "Pro"
+            },
+            "subtitle": {
+                "de": "Mehr Chat und Komfort",
+                "en": "More chat and comfort"
+            },
+            "badge": {
+                "de": "Beliebt",
+                "en": "Popular"
+            },
+            "limits": {
+                "daily_chat_limit": 500,
+                "history_messages": 30,
+                "can_send_images": false,
+                "can_use_image_mode": false,
+                "can_use_voice_input": true,
+                "can_use_reply_styles": true
+            },
+            "features": {
+                "de": [
+                    "Höheres tägliches Chatlimit",
+                    "Mehr Kontext pro Unterhaltung",
+                    "Spracheingabe",
+                    "Alle Antwortstile"
+                ],
+                "en": [
+                    "Higher daily chat limit",
+                    "More context per conversation",
+                    "Voice input",
+                    "All reply styles"
+                ]
+            }
+        },
+        {
+            "id": "vision",
+            "kind": "auto_renewable",
+            "product_id": "khione.vision.monthly",
+            "title": {
+                "de": "Vision",
+                "en": "Vision"
+            },
+            "subtitle": {
+                "de": "Chat mit Bildern",
+                "en": "Chat with images"
+            },
+            "badge": {
+                "de": "Bilder",
+                "en": "Images"
+            },
+            "limits": {
+                "daily_chat_limit": 1000,
+                "history_messages": 60,
+                "can_send_images": true,
+                "can_use_image_mode": true,
+                "can_use_voice_input": true,
+                "can_use_reply_styles": true
+            },
+            "features": {
+                "de": [
+                    "Sehr hohes tägliches Chatlimit",
+                    "Bildanhänge und Bildmodus",
+                    "Mehr Kontext pro Unterhaltung",
+                    "Ideal für kreative Bild-Prompts",
+                    "Alle Pro-Funktionen"
+                ],
+                "en": [
+                    "Very high daily chat limit",
+                    "Image attachments and image mode",
+                    "More context per conversation",
+                    "Ideal for creative image prompts",
+                    "All Pro features"
+                ]
+            }
+        },
+        {
+            "id": "infinity",
+            "kind": "auto_renewable",
+            "product_id": "khione.infinity.monthly",
+            "title": {
+                "de": "Infinity",
+                "en": "Infinity"
+            },
+            "subtitle": {
+                "de": "Für intensive Nutzung",
+                "en": "For heavy use"
+            },
+            "badge": {
+                "de": "Maximal",
+                "en": "Max"
+            },
+            "limits": {
+                "daily_chat_limit": null,
+                "history_messages": 100,
+                "can_send_images": true,
+                "can_use_image_mode": true,
+                "can_use_voice_input": true,
+                "can_use_reply_styles": true
+            },
+            "features": {
+                "de": [
+                    "Kein tägliches Chatlimit",
+                    "Bildanhänge und Bildmodus",
+                    "Maximaler Kontext pro Unterhaltung",
+                    "Ideal für Lernen und Coding",
+                    "Alle aktuellen Funktionen"
+                ],
+                "en": [
+                    "No daily chat limit",
+                    "Image attachments and image mode",
+                    "Maximum context per conversation",
+                    "Ideal for learning and coding",
+                    "All current features"
+                ]
+            }
+        }
+    ],
+    "one_time_purchases": [
+        {
+            "id": "lifetime",
+            "kind": "non_consumable",
+            "product_id": "khione.lifetime",
+            "unlocks_plan_id": "infinity",
+            "title": {
+                "de": "Lifetime",
+                "en": "Lifetime"
+            },
+            "subtitle": {
+                "de": "Einmal kaufen, dauerhaft nutzen",
+                "en": "Pay once, use forever"
+            },
+            "features": {
+                "de": [
+                    "Schaltet Infinity dauerhaft frei",
+                    "Keine wiederkehrende Zahlung",
+                    "Einmaliger Kauf über den Store"
+                ],
+                "en": [
+                    "Unlocks Infinity permanently",
+                    "No recurring payment",
+                    "One-time store purchase"
+                ]
+            }
+        }
+    ]
+}

@@ -34,8 +34,8 @@ struct InfoView: View {
         Section {
             VStack(spacing: 8) {
                 Image(systemName: "snowflake")
-                    .frame(width: 64, height: 64)
-
+                    .font(.largeTitle)
+            
                 Text(content.subtitle)
                     .font(.body)
                     .foregroundStyle(.secondary)

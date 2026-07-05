@@ -10,8 +10,6 @@ import SwiftUI
 @main
 struct KhioneApp: App {
 
-    @Environment(\.scenePhase) private var scenePhase
-
     @StateObject private var themeManager: ThemeManager
 
     @AppStorage("hasSeenOnboarding")
@@ -39,11 +37,6 @@ struct KhioneApp: App {
                 OnboardingView {
                     hasSeenOnboarding = true
                 }
-            }
-        }
-        .onChange(of: scenePhase) { oldValue, newValue in
-            if newValue == .background {
-                GreetingManager.resetSession()
             }
         }
     }

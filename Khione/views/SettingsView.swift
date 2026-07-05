@@ -42,6 +42,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             profileSection
+            purchaseSection
             languageSection
             themeSection
             accessibilitySection
@@ -50,7 +51,6 @@ struct SettingsView: View {
         .navigationTitle(settingsTitle)
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
-        .environment(\.locale, Locale(identifier: language))
     }
 }
 
@@ -74,13 +74,13 @@ extension SettingsView {
 
     fileprivate var profileSection: some View {
         Section(text.title) {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 Circle()
                     .fill(themeManager.accentColor)
-                    .frame(width: 48, height: 48)
+                    .frame(width: 38, height: 38)
                     .overlay {
                         Text(initials)
-                            .font(.subheadline.weight(.semibold))
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(.white)
                     }
                     .accessibilityHidden(true)
@@ -89,7 +89,7 @@ extension SettingsView {
                     .textInputAutocapitalization(.words)
                     .accessibilityLabel(profileNameLabel)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 2)
         }
     }
 
@@ -102,6 +102,7 @@ extension SettingsView {
                     .tag("en")
             }
             .pickerStyle(.palette)
+            .controlSize(.regular)
             .accessibilityHint(languageHint)
         }
     }
@@ -115,12 +116,11 @@ extension SettingsView {
                     ) {
                         themeManager.selectTheme(theme)
                     }
-                    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: theme.icon)
-                            .font(.title3)
-                            .frame(width: 30, height: 30)
+                            .font(.body.weight(.semibold))
+                            .frame(width: 26, height: 26)
                             .foregroundStyle(
                                 theme.id == themeManager.selectedTheme.id
                                     ? themeManager.accentColor : .secondary
@@ -131,7 +131,7 @@ extension SettingsView {
                                 .foregroundStyle(.primary)
 
                             Text(themeDescription(theme))
-                                .font(.caption)
+                                .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
 
@@ -148,6 +148,7 @@ extension SettingsView {
                 .accessibilityLabel(theme.name)
                 .accessibilityValue(themeAccessibilityValue(theme))
                 .accessibilityHint(themeHint)
+                .padding(.vertical, 1)
             }
         }
     }
@@ -160,8 +161,15 @@ extension SettingsView {
                 Label("Khione", systemImage: "snowflake")
             }
 
+            Link(
+                language == "de" ? "Nutzungsbedingungen" : "Terms of Use",
+                destination: URL(
+                    string:
+                        "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+                )!
+            )
+
             Label(Bundle.main.appVersionString, systemImage: "number")
-            Label(text.builtWith, systemImage: "applelogo")
         }
     }
 
@@ -174,21 +182,55 @@ extension SettingsView {
                 )
             }
             .accessibilityHint(compactModeHint)
+            .font(.body)
 
             Toggle(isOn: $largeChatText) {
                 Label(largeChatTextTitle, systemImage: "textformat.size")
             }
             .accessibilityHint(largeChatTextHint)
+            .font(.body)
 
             Toggle(isOn: $reduceAnimations) {
                 Label(reduceAnimationsTitle, systemImage: "figure.walk.motion")
             }
             .accessibilityHint(reduceAnimationsHint)
+            .font(.body)
 
             Toggle(isOn: $alwaysShowSendButton) {
                 Label(alwaysShowSendButtonTitle, systemImage: "arrow.up.circle")
             }
             .accessibilityHint(alwaysShowSendButtonHint)
+            .font(.body)
+        }
+    }
+
+    fileprivate var purchaseSection: some View {
+        Section(language == "de" ? "Abo" : "Plans") {
+            NavigationLink {
+                SubscriptionView()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "sparkles")
+                        .font(.body.weight(.semibold))
+                        .frame(width: 26, height: 26)
+                        .foregroundStyle(themeManager.accentColor)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(
+                            language == "de"
+                                ? "Abo & Einmalkauf"
+                                : "Plans & one-time purchase"
+                        )
+                        Text(
+                            language == "de"
+                                ? "Funktionen freischalten"
+                                : "Unlock more features"
+                        )
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
     }
 

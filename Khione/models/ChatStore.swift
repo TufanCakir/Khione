@@ -20,6 +20,7 @@ final class ChatStore: ObservableObject {
     // MARK: - Storage
 
     private let key = "chat_sessions"
+    static let newChatTitle = "New Chat"
 
     // MARK: - Init
 
@@ -48,7 +49,7 @@ final class ChatStore: ObservableObject {
         return sessions[index]
     }
 
-    // MARK: - Mutation Helper ⭐ (WICHTIG)
+    // MARK: - Mutation Helper
 
     func updateActiveChat(
         _ update: (inout ChatSession) -> Void
@@ -65,12 +66,11 @@ final class ChatStore: ObservableObject {
 
     func createNewChat() {
 
-        // verhindert Spam New Chats
         if activeChat?.messages.isEmpty == true {
             return
         }
 
-        let chat = ChatSession(title: "New Chat")
+        let chat = ChatSession(title: Self.newChatTitle)
 
         sessions.insert(chat, at: 0)
 
@@ -82,12 +82,7 @@ final class ChatStore: ObservableObject {
     func renameActiveChat(to title: String) {
 
         updateActiveChat {
-
-            $0.title =
-                title
-                .trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                )
+            $0.title = Self.normalizedTitle(title)
         }
     }
 
@@ -99,10 +94,7 @@ final class ChatStore: ObservableObject {
             )
         else { return }
 
-        sessions[index].title =
-            newTitle.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
+        sessions[index].title = Self.normalizedTitle(newTitle)
 
         save()
     }
@@ -112,11 +104,8 @@ final class ChatStore: ObservableObject {
         sessions.removeAll { $0.id == chat.id }
 
         if sessions.isEmpty {
-
-            createNewChat()
-
+            insertEmptyChat()
         } else if activeID == chat.id {
-
             activeID = sessions.first?.id
         }
 
@@ -128,11 +117,8 @@ final class ChatStore: ObservableObject {
         sessions.remove(atOffsets: offsets)
 
         if sessions.isEmpty {
-
-            createNewChat()
-
+            insertEmptyChat()
         } else {
-
             activeID = sessions.first?.id
         }
 
@@ -152,7 +138,7 @@ final class ChatStore: ObservableObject {
         save()
     }
 
-    // MARK: - Messages ⭐
+    // MARK: - Messages
 
     func update(messages: [ChatMessage]) {
 
@@ -212,5 +198,16 @@ final class ChatStore: ObservableObject {
 
             activeID = sessions.first?.id
         }
+    }
+
+    private func insertEmptyChat() {
+        let chat = ChatSession(title: Self.newChatTitle)
+        sessions.insert(chat, at: 0)
+        activeID = chat.id
+    }
+
+    private static func normalizedTitle(_ title: String) -> String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? newChatTitle : trimmed
     }
 }

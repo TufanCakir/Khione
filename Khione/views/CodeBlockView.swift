@@ -74,8 +74,6 @@ struct CodeBlockView: View {
         UIPasteboard.general.string = code
         copied = true
 
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             copied = false
         }

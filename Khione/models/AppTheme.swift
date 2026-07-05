@@ -37,6 +37,10 @@ struct AppTheme: Identifiable, Decodable {
 extension Bundle {
 
     func loadThemes() -> [AppTheme] {
+        if let cached = ThemeCache.values {
+            return cached
+        }
+
         guard let url = url(forResource: "themes", withExtension: "json") else {
             assertionFailure("❌ themes.json not found")
             return []
@@ -44,10 +48,15 @@ extension Bundle {
 
         do {
             let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode([AppTheme].self, from: data)
+            let themes = try JSONDecoder().decode([AppTheme].self, from: data)
+            ThemeCache.values = themes
+            return themes
         } catch {
-            print("❌ Failed to load themes:", error)
             return []
         }
     }
+}
+
+private enum ThemeCache {
+    static var values: [AppTheme]?
 }

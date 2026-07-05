@@ -24,6 +24,9 @@ final class SpeechRecognizer: ObservableObject {
     @Published private(set) var transcript: String = ""
     @Published private(set) var state: State = .idle
 
+    var onTranscriptChanged: ((String) -> Void)?
+    var onStateChanged: ((State) -> Void)?
+
     var isRecording: Bool { state == .recording }
 
     // ✅ Technische Ressourcen → explizit freigegeben
@@ -81,12 +84,12 @@ final class SpeechRecognizer: ObservableObject {
         guard state == .idle else { return }
 
         guard let recognizer, recognizer.isAvailable else {
-            state = .error("Speech recognition unavailable.")
+            updateState(.error("Speech recognition unavailable."))
             throw SpeechError.recognizerUnavailable
         }
 
-        transcript = ""
-        state = .recording
+        updateTranscript("")
+        updateState(.recording)
 
         try configureAudioSession()
 
@@ -112,7 +115,9 @@ final class SpeechRecognizer: ObservableObject {
 
             Task { @MainActor in
                 if let result {
-                    self.transcript = result.bestTranscription.formattedString
+                    self.updateTranscript(
+                        result.bestTranscription.formattedString
+                    )
                 }
 
                 if error != nil || result?.isFinal == true {
@@ -130,7 +135,7 @@ final class SpeechRecognizer: ObservableObject {
     private func finish() {
         guard state == .recording else { return }
 
-        state = .finishing
+        updateState(.finishing)
 
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
@@ -143,7 +148,7 @@ final class SpeechRecognizer: ObservableObject {
 
         try? AVAudioSession.sharedInstance().setActive(false)
 
-        state = .idle
+        updateState(.idle)
     }
 
     private func configureAudioSession() throws {
@@ -154,6 +159,16 @@ final class SpeechRecognizer: ObservableObject {
             options: [.duckOthers, .defaultToSpeaker]
         )
         try session.setActive(true, options: .notifyOthersOnDeactivation)
+    }
+
+    private func updateTranscript(_ newTranscript: String) {
+        transcript = newTranscript
+        onTranscriptChanged?(newTranscript)
+    }
+
+    private func updateState(_ newState: State) {
+        state = newState
+        onStateChanged?(newState)
     }
 }
 

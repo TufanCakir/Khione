@@ -58,9 +58,6 @@ struct ChatMessage: Identifiable, Codable, Equatable {
         (text?.isEmpty ?? true) && imageData == nil
     }
 
-    var isGreeting: Bool {
-        kind == .greeting && role == .assistant
-    }
 }
 
 enum Role: String, Codable {

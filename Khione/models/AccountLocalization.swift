@@ -107,17 +107,20 @@ extension Bundle {
     func loadAccountLocalization(language: String, fallback: String = "en")
         -> AccountLocalization
     {
+        if let cached = LocalizationCache.account[language] {
+            return cached
+        }
 
         if let loc = loadLocalizationFile(language) {
+            LocalizationCache.account[language] = loc
             return loc
         }
 
         if let fallbackLoc = loadLocalizationFile(fallback) {
-            print("⚠️ Using fallback localization: \(fallback)")
+            LocalizationCache.account[language] = fallbackLoc
             return fallbackLoc
         }
 
-        print("❌ No localization found – using hard fallback")
         return .fallback
     }
 
@@ -131,4 +134,8 @@ extension Bundle {
 
         return try? JSONDecoder().decode(AccountLocalization.self, from: data)
     }
+}
+
+private enum LocalizationCache {
+    static var account: [String: AccountLocalization] = [:]
 }

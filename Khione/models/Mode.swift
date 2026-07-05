@@ -29,20 +29,30 @@ extension Mode {
 extension Bundle {
 
     func loadKhioneModes() -> [Mode] {
+        if let cached = ModeCache.values {
+            return cached
+        }
 
         guard let url = url(forResource: "modes", withExtension: "json")
         else {
             assertionFailure("❌ modes.json not found")
+            ModeCache.values = Mode.fallbackModes
             return Mode.fallbackModes
         }
 
         do {
             let data = try Data(contentsOf: url)
             let modes = try JSONDecoder().decode([Mode].self, from: data)
-            return modes.isEmpty ? Mode.fallbackModes : modes
+            let result = modes.isEmpty ? Mode.fallbackModes : modes
+            ModeCache.values = result
+            return result
         } catch {
-            print("❌ Failed to load modes:", error)
+            ModeCache.values = Mode.fallbackModes
             return Mode.fallbackModes
         }
     }
+}
+
+private enum ModeCache {
+    static var values: [Mode]?
 }

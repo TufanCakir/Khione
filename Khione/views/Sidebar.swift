@@ -12,16 +12,14 @@ struct Sidebar: View {
     @ObservedObject var store: ChatStore
     var onOpenChat: (() -> Void)?
 
-    @State private var renamingChat: ChatSession?
-    @State private var renameText = ""
+    @StateObject private var viewModel = SidebarViewModel()
 
     var body: some View {
         List {
             Section {
                 ForEach(store.sessions) { chat in
                     Button {
-                        store.activeID = chat.id
-                        onOpenChat?()
+                        viewModel.open(chat, in: store, onOpenChat: onOpenChat)
                     } label: {
                         Text(chat.title)
                             .lineLimit(1)
@@ -41,7 +39,7 @@ struct Sidebar: View {
                 EditButton()
             }
         }
-        .sheet(item: $renamingChat) { chat in
+        .sheet(item: $viewModel.renamingChat) { chat in
             renameSheet(for: chat)
         }
     }
@@ -50,8 +48,7 @@ struct Sidebar: View {
 
     private func renameButton(for chat: ChatSession) -> some View {
         Button {
-            renamingChat = chat
-            renameText = chat.title
+            viewModel.startRename(chat)
         } label: {
             Label("Rename", systemImage: "pencil")
         }
@@ -59,7 +56,7 @@ struct Sidebar: View {
 
     private func deleteButton(for chat: ChatSession) -> some View {
         Button(role: .destructive) {
-            store.delete(chat)
+            viewModel.delete(chat, in: store)
         } label: {
             Label("Delete", systemImage: "trash")
         }
@@ -70,26 +67,21 @@ struct Sidebar: View {
     private func renameSheet(for chat: ChatSession) -> some View {
         NavigationStack {
             Form {
-                TextField("Chat name", text: $renameText)
+                TextField("Chat name", text: $viewModel.renameText)
             }
             .navigationTitle("Rename Chat")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        renamingChat = nil
+                        viewModel.cancelRename()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        store.rename(chat, to: renameText)
-                        renamingChat = nil
+                        viewModel.saveRename(chat, in: store)
                     }
-                    .disabled(
-                        renameText.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ).isEmpty
-                    )
+                    .disabled(!viewModel.canSaveRename)
                 }
             }
         }
@@ -98,10 +90,10 @@ struct Sidebar: View {
     // MARK: - List Actions
 
     private func delete(at offsets: IndexSet) {
-        store.deleteChats(at: offsets)
+        viewModel.delete(at: offsets, in: store)
     }
 
     private func move(from source: IndexSet, to destination: Int) {
-        store.moveChats(from: source, to: destination)
+        viewModel.move(from: source, to: destination, in: store)
     }
 }

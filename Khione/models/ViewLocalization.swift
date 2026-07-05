@@ -45,17 +45,20 @@ extension Bundle {
             ?? "en",
         fallback: String = "en"
     ) -> ViewLocalization {
+        if let cached = ViewLocalizationCache.values[language] {
+            return cached
+        }
 
         if let loc = loadKhioneViewFile(language) {
+            ViewLocalizationCache.values[language] = loc
             return loc
         }
 
         if let fallbackLoc = loadKhioneViewFile(fallback) {
-            print("⚠️ Using fallback khione_view localization:", fallback)
+            ViewLocalizationCache.values[language] = fallbackLoc
             return fallbackLoc
         }
 
-        print("❌ Missing khione_view localization – using hard fallback")
         return .fallback
     }
 
@@ -73,4 +76,8 @@ extension Bundle {
             from: data
         )
     }
+}
+
+private enum ViewLocalizationCache {
+    static var values: [String: ViewLocalization] = [:]
 }

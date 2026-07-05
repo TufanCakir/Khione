@@ -17,24 +17,19 @@ extension Bundle {
         fallback: String = "en"
 
     ) -> [ReplyStyle] {
-
-        // Primary language
+        if let cached = ReplyStylesCache.values[language] {
+            return cached
+        }
 
         if let styles = loadReplyStylesFile(language) {
-
+            ReplyStylesCache.values[language] = styles
             return styles
         }
 
-        // fallback
-
         if let fallbackStyles = loadReplyStylesFile(fallback) {
-
-            print("⚠️ Using fallback reply_styles:", fallback)
-
+            ReplyStylesCache.values[language] = fallbackStyles
             return fallbackStyles
         }
-
-        print("❌ Missing reply_styles localization")
 
         return []
     }
@@ -61,4 +56,8 @@ extension Bundle {
             from: data
         )
     }
+}
+
+private enum ReplyStylesCache {
+    static var values: [String: [ReplyStyle]] = [:]
 }

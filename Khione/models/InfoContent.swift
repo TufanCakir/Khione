@@ -14,25 +14,20 @@ struct InfoContent: Decodable {
 }
 
 struct InfoSection: Decodable, Identifiable {
-    let id: UUID
     let title: String
     let text: String
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = UUID()  // 👈 lokal generiert
-        self.title = try container.decode(String.self, forKey: .title)
-        self.text = try container.decode(String.self, forKey: .text)
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case title
-        case text
+    var id: String {
+        title
     }
 }
 
 extension Bundle {
     func loadInfo(language: String) -> InfoContent {
+        if let cached = InfoContentCache.values[language] {
+            return cached
+        }
+
         let files = ["info_\(language)", "info_en"]
 
         for file in files {
@@ -43,10 +38,15 @@ extension Bundle {
                     from: data
                 )
             {
+                InfoContentCache.values[language] = decoded
                 return decoded
             }
         }
 
         fatalError("❌ Missing info JSON files")
     }
+}
+
+private enum InfoContentCache {
+    static var values: [String: InfoContent] = [:]
 }

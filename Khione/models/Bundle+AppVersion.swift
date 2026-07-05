@@ -8,7 +8,7 @@
 import Foundation
 
 extension Bundle {
-    /// A human-readable version string combining CFBundleShortVersionString and CFBundleVersion.
+
     public var appVersionString: String {
         let shortVersion =
             infoDictionary?["CFBundleShortVersionString"] as? String

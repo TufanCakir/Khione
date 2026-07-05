@@ -15,9 +15,20 @@ struct RootView: View {
 
     @State private var selectedTab = 0
     @State private var pendingSharedPrompt: String?
+    @AppStorage(DefaultsKey.activeSubscriptionPlanID)
+    private var activeSubscriptionPlanID = "standard"
     @AppStorage("language")
     private var language =
         Locale.current.language.languageCode?.identifier ?? "en"
+
+    private let subscriptionCatalog = Bundle.main.loadSubscriptionCatalog()
+
+    private var canUseHistory: Bool {
+        subscriptionCatalog
+            .plan(id: activeSubscriptionPlanID)
+            .limits
+            .historyMessages > 0
+    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -34,14 +45,26 @@ struct RootView: View {
             }
             .tag(0)
 
-            Sidebar(
-                store: chatStore,
-                onOpenChat: {
-                    selectedTab = 0
+            if canUseHistory {
+                Sidebar(
+                    store: chatStore,
+                    onOpenChat: {
+                        selectedTab = 0
+                    }
+                )
+                .tabItem {
+                    Label("History", systemImage: "clock.arrow.circlepath")
                 }
-            )
-            .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
-            .tag(1)
+                .tag(1)
+            }
+
+            NavigationStack {
+                SubscriptionView()
+            }
+            .tabItem {
+                Label("Plans", systemImage: "sparkles")
+            }
+            .tag(2)
 
             NavigationStack {
                 SettingsView()
@@ -49,13 +72,18 @@ struct RootView: View {
             .tabItem {
                 Label("Settings", systemImage: "gear")
             }
-            .tag(2)
+            .tag(3)
         }
         .onAppear(perform: consumePendingSharedContent)
         .onOpenURL(perform: handleIncomingURL)
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 consumePendingSharedContent()
+            }
+        }
+        .onChange(of: activeSubscriptionPlanID) { _, _ in
+            if !canUseHistory && selectedTab == 1 {
+                selectedTab = 0
             }
         }
     }
