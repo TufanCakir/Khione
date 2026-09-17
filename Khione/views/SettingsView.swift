@@ -56,16 +56,12 @@ struct SettingsView: View {
 
 extension SettingsView {
 
-    fileprivate var settingsTitle: String {
-        language == "de" ? "Einstellungen" : "Settings"
-    }
+    fileprivate var settingsTitle: LocalizedStringResource { "Settings" }
 
-    fileprivate var themeTitle: String {
-        language == "de" ? "Design" : "Theme"
-    }
+    fileprivate var themeTitle: LocalizedStringResource { "Theme" }
 
-    fileprivate var accessibilityTitle: String {
-        language == "de" ? "Bedienungshilfen" : "Accessibility"
+    fileprivate var accessibilityTitle: LocalizedStringResource {
+        "Accessibility"
     }
 
     fileprivate var shouldReduceMotion: Bool {
@@ -162,12 +158,13 @@ extension SettingsView {
             }
 
             Link(
-                language == "de" ? "Nutzungsbedingungen" : "Terms of Use",
                 destination: URL(
                     string:
                         "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
                 )!
-            )
+            ) {
+                Text("Terms of Use")
+            }
 
             Label(Bundle.main.appVersionString, systemImage: "number")
         }
@@ -205,7 +202,7 @@ extension SettingsView {
     }
 
     fileprivate var purchaseSection: some View {
-        Section(language == "de" ? "Abo" : "Plans") {
+        Section("Plans") {
             NavigationLink {
                 SubscriptionView()
             } label: {
@@ -216,16 +213,8 @@ extension SettingsView {
                         .foregroundStyle(themeManager.accentColor)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(
-                            language == "de"
-                                ? "Abo & Einmalkauf"
-                                : "Plans & one-time purchase"
-                        )
-                        Text(
-                            language == "de"
-                                ? "Funktionen freischalten"
-                                : "Unlock more features"
-                        )
+                        Text("Plans & one-time purchase")
+                        Text("Unlock more features")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     }
@@ -234,83 +223,89 @@ extension SettingsView {
         }
     }
 
-    fileprivate func themeDescription(_ theme: AppTheme) -> String {
+    fileprivate func themeDescription(
+        _ theme: AppTheme
+    ) -> LocalizedStringResource {
         switch theme.preferredScheme {
         case "system":
-            return language == "de" ? "Folgt dem System" : "Follows system"
+            return "Follows system"
         case "light":
-            return language == "de" ? "Heller Modus" : "Light mode"
+            return "Light mode"
         case "dark":
-            return language == "de" ? "Dunkler Modus" : "Dark mode"
+            return "Dark mode"
         default:
-            return language == "de" ? "Standard" : "Default"
+            return "Default"
         }
     }
 
-    fileprivate var profileNameLabel: String {
-        language == "de" ? "Profilname" : "Profile name"
+    fileprivate var profileNameLabel: LocalizedStringResource {
+        "Profile name"
     }
 
-    fileprivate var languageHint: String {
-        language == "de"
-            ? "Ändert die Sprache der App."
-            : "Changes the app language."
+    fileprivate var languageHint: LocalizedStringResource {
+        "Changes the app language."
     }
 
-    fileprivate var themeHint: String {
-        language == "de"
-            ? "Ändert das Erscheinungsbild der App."
-            : "Changes the app appearance."
+    fileprivate var themeHint: LocalizedStringResource {
+        "Changes the app appearance."
     }
 
     fileprivate func themeAccessibilityValue(_ theme: AppTheme) -> String {
-        guard theme.id == themeManager.selectedTheme.id else {
-            return themeDescription(theme)
+        let locale = Locale(identifier: language)
+        let description: String
+
+        switch theme.preferredScheme {
+        case "system":
+            description = String(localized: "Follows system", locale: locale)
+        case "light":
+            description = String(localized: "Light mode", locale: locale)
+        case "dark":
+            description = String(localized: "Dark mode", locale: locale)
+        default:
+            description = String(localized: "Default", locale: locale)
         }
 
-        let selected = language == "de" ? "Ausgewählt" : "Selected"
-        return "\(selected), \(themeDescription(theme))"
+        guard theme.id == themeManager.selectedTheme.id else {
+            return description
+        }
+
+        return String(
+            localized: "Selected, \(description)",
+            locale: locale,
+            comment: "Accessibility value for the currently selected theme."
+        )
     }
 
-    fileprivate var compactModeTitle: String {
-        language == "de" ? "Kompakter Modus" : "Compact mode"
+    fileprivate var compactModeTitle: LocalizedStringResource {
+        "Compact mode"
     }
 
-    fileprivate var compactModeHint: String {
-        language == "de"
-            ? "Verringert Abstände im Chat."
-            : "Reduces spacing in the chat."
+    fileprivate var compactModeHint: LocalizedStringResource {
+        "Reduces spacing in the chat."
     }
 
-    fileprivate var largeChatTextTitle: String {
-        language == "de" ? "Größere Chat-Schrift" : "Larger chat text"
+    fileprivate var largeChatTextTitle: LocalizedStringResource {
+        "Larger chat text"
     }
 
-    fileprivate var largeChatTextHint: String {
-        language == "de"
-            ? "Vergrößert Nachrichten und Eingabe im Chat."
-            : "Increases message and input text in chat."
+    fileprivate var largeChatTextHint: LocalizedStringResource {
+        "Increases message and input text in chat."
     }
 
-    fileprivate var reduceAnimationsTitle: String {
-        language == "de" ? "Animationen reduzieren" : "Reduce animations"
+    fileprivate var reduceAnimationsTitle: LocalizedStringResource {
+        "Reduce animations"
     }
 
-    fileprivate var reduceAnimationsHint: String {
-        language == "de"
-            ? "Reduziert Bewegungen zusätzlich zur Systemeinstellung."
-            : "Reduces motion in addition to the system setting."
+    fileprivate var reduceAnimationsHint: LocalizedStringResource {
+        "Reduces motion in addition to the system setting."
     }
 
-    fileprivate var alwaysShowSendButtonTitle: String {
-        language == "de"
-            ? "Sendebutton immer anzeigen" : "Always show send button"
+    fileprivate var alwaysShowSendButtonTitle: LocalizedStringResource {
+        "Always show send button"
     }
 
-    fileprivate var alwaysShowSendButtonHint: String {
-        language == "de"
-            ? "Zeigt den Sendebutton auch bei leerer Eingabe deaktiviert an."
-            : "Shows the send button disabled even when the input is empty."
+    fileprivate var alwaysShowSendButtonHint: LocalizedStringResource {
+        "Shows the send button disabled even when the input is empty."
     }
 }
 

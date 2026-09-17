@@ -48,7 +48,12 @@ final class ChatViewModel: ObservableObject {
     private let speech = SpeechRecognizer()
     private weak var chatStore: ChatStore?
     private var currentTask: Task<Void, Never>?
+    private var responseTimeoutTask: Task<Void, Never>?
+    private var activeRequestID: UUID?
+    private let responseTimeout: Duration = .seconds(45)
+    private let maximumPromptCharacters = 10_000
     private var greetings: [Greeting] = []
+    private var localizationLocale = Locale.current
     var onMessagesChanged: (([ChatMessage]) -> Void)?
 
     init() {
@@ -125,6 +130,7 @@ final class ChatViewModel: ObservableObject {
     }
 
     func reloadLocalizations(language: String) {
+        localizationLocale = Locale(identifier: language)
         viewText = Bundle.main.loadKhioneViewLocalization(language: language)
         replyStyles = Bundle.main.loadReplyStyles(language: language)
         greetings = Bundle.main.loadGreetings(language: language)
@@ -266,8 +272,22 @@ final class ChatViewModel: ObservableObject {
             return
         }
 
-        guard await speech.requestPermission() else { return }
-        try? speech.start()
+        guard await speech.requestPermission() else {
+            errorMessage = String(
+                localized: "Speech recognition permission was denied.",
+                locale: localizationLocale
+            )
+            return
+        }
+
+        do {
+            try speech.start()
+        } catch {
+            errorMessage = String(
+                localized: "Speech recognition could not start.",
+                locale: localizationLocale
+            )
+        }
     }
 
     func stopSpeechIfNeeded() {
@@ -289,8 +309,18 @@ final class ChatViewModel: ObservableObject {
         incrementDailyChatCount()
         isProcessing = true
 
+        let requestID = UUID()
+        activeRequestID = requestID
         currentTask = Task { [weak self] in
-            await self?.generateResponse()
+            await self?.generateResponse(requestID: requestID)
+        }
+        responseTimeoutTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: self?.responseTimeout ?? .seconds(45))
+                self?.handleResponseTimeout(requestID: requestID)
+            } catch {
+                // Cancellation is expected when the model responds in time.
+            }
         }
 
         return safeText
@@ -301,7 +331,9 @@ final class ChatViewModel: ObservableObject {
     }
 
     func reset() {
+        cancel()
         messages.removeAll()
+        onMessagesChanged?(messages)
         stopSpeechIfNeeded()
     }
 
@@ -316,7 +348,34 @@ final class ChatViewModel: ObservableObject {
 
     private func cancelCurrentTask() {
         currentTask?.cancel()
+        responseTimeoutTask?.cancel()
         currentTask = nil
+        responseTimeoutTask = nil
+        activeRequestID = nil
+    }
+
+    private func finishRequest(_ requestID: UUID) {
+        guard activeRequestID == requestID else { return }
+
+        responseTimeoutTask?.cancel()
+        responseTimeoutTask = nil
+        currentTask = nil
+        activeRequestID = nil
+        isProcessing = false
+    }
+
+    private func handleResponseTimeout(requestID: UUID) {
+        guard activeRequestID == requestID else { return }
+
+        currentTask?.cancel()
+        currentTask = nil
+        responseTimeoutTask = nil
+        activeRequestID = nil
+        isProcessing = false
+        errorMessage = String(
+            localized: "Khione took too long to respond. Please try again.",
+            locale: localizationLocale
+        )
     }
 
     private var hasReachedDailyChatLimit: Bool {
@@ -325,11 +384,17 @@ final class ChatViewModel: ObservableObject {
     }
 
     private var limitMessage: String {
-        "Daily chat limit reached."
+        String(
+            localized: "Daily chat limit reached.",
+            locale: localizationLocale
+        )
     }
 
     private var upgradeMessage: String {
-        "Upgrade required for this feature."
+        String(
+            localized: "Upgrade required for this feature.",
+            locale: localizationLocale
+        )
     }
 
     private func incrementDailyChatCount() {
@@ -359,14 +424,16 @@ final class ChatViewModel: ObservableObject {
     }
 
     // MARK: - Core Logic
-    private func generateResponse() async {
+    private func generateResponse(requestID: UUID) async {
         defer {
-            isProcessing = false
-            currentTask = nil
+            finishRequest(requestID)
         }
 
         guard model.isAvailable else {
-            errorMessage = "Language model not available."
+            errorMessage = String(
+                localized: "Language model not available.",
+                locale: localizationLocale
+            )
             return
         }
 
@@ -378,29 +445,54 @@ final class ChatViewModel: ObservableObject {
                 instructions: buildInstructions()
             )
             let response = try await session.respond(to: prompt)
-            guard !Task.isCancelled else { return }
+            guard
+                !Task.isCancelled,
+                activeRequestID == requestID
+            else { return }
 
-            appendAssistantMessage(
-                response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .isEmpty
-                    ? "..."
-                    : response.content
+            let content = response.content.trimmingCharacters(
+                in: .whitespacesAndNewlines
             )
+            guard !content.isEmpty else {
+                errorMessage = String(
+                    localized: "Khione could not generate a response. Please try again.",
+                    locale: localizationLocale
+                )
+                return
+            }
+
+            appendAssistantMessage(content)
+        } catch is CancellationError {
+            // Cancellation is expected after a timeout, reset, or manual cancel.
         } catch {
-            guard !Task.isCancelled else { return }
+            guard
+                !Task.isCancelled,
+                activeRequestID == requestID
+            else { return }
             errorMessage = error.localizedDescription
         }
     }
 
     // MARK: - Prompt Builder
     private func buildPrompt() -> String {
-        let history =
-            messages
-            .filter { $0.kind == .normal }
-            .suffix(10)
-            .compactMap(conversationLine)
-            .joined(separator: "\n")
+        var remainingCharacters = maximumPromptCharacters
+        var lines: [String] = []
 
+        for message in messages
+            .filter({ $0.kind == .normal })
+            .reversed()
+        {
+            guard
+                remainingCharacters > 0,
+                let line = conversationLine(for: message)
+            else { continue }
+
+            let clippedLine = String(line.prefix(remainingCharacters))
+            lines.append(clippedLine)
+            remainingCharacters -= clippedLine.count
+        }
+
+        let history = lines.reversed().joined(separator: "\n")
         return """
             Continue this conversation. Answer the latest user message.
 

@@ -1,0 +1,49 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Open ${applicationName}" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Open ${applicationName}",
+              "Start ${applicationName}",
+              "Launch ${applicationName}"
+            ]
+          }
+        }
+      }
+    },
+    "Open ${applicationName} accessibility" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Open ${applicationName} accessibility",
+              "Use ${applicationName} with accessibility"
+            ]
+          }
+        }
+      }
+    },
+    "Open ${applicationName} chat" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "new",
+            "values" : [
+              "Open ${applicationName} chat",
+              "Chat with ${applicationName}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.3"
+}

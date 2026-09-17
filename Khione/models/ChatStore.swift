@@ -1,31 +1,40 @@
-//
-//  ChatStore.swift
-//  Khione
-//
-//  Created by Tufan Cakir on 18.12.25.
-//
-
 internal import Combine
 import Foundation
+import OSLog
 import SwiftUI
 
 @MainActor
 final class ChatStore: ObservableObject {
-
-    // MARK: - Published
-
     @Published private(set) var sessions: [ChatSession] = []
     @Published var activeID: UUID?
 
-    // MARK: - Storage
-
-    private let key = "chat_sessions"
     static let newChatTitle = "New Chat"
 
-    // MARK: - Init
+    private enum LegacyKey {
+        static let sessions = "chat_sessions"
+        static let activeID = "chat_sessions_active"
+    }
 
-    init() {
+    private let persistence: any ChatPersisting
+    private let legacyDefaults: UserDefaults?
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "Khione",
+        category: "ChatPersistence"
+    )
 
+    convenience init() {
+        self.init(
+            persistence: FileChatPersistence(),
+            legacyDefaults: .standard
+        )
+    }
+
+    init(
+        persistence: any ChatPersisting,
+        legacyDefaults: UserDefaults?
+    ) {
+        self.persistence = persistence
+        self.legacyDefaults = legacyDefaults
         load()
 
         if sessions.isEmpty {
@@ -33,74 +42,49 @@ final class ChatStore: ObservableObject {
         }
     }
 
-    // MARK: - Active Chat
-
     var activeChatIndex: Int? {
-
-        guard let id = activeID else { return nil }
-
-        return sessions.firstIndex { $0.id == id }
+        guard let activeID else { return nil }
+        return sessions.firstIndex { $0.id == activeID }
     }
 
     var activeChat: ChatSession? {
-
-        guard let index = activeChatIndex else { return nil }
-
-        return sessions[index]
+        guard let activeChatIndex else { return nil }
+        return sessions[activeChatIndex]
     }
 
-    // MARK: - Mutation Helper
-
-    func updateActiveChat(
-        _ update: (inout ChatSession) -> Void
-    ) {
-
-        guard let index = activeChatIndex else { return }
-
-        update(&sessions[index])
-
+    func updateActiveChat(_ update: (inout ChatSession) -> Void) {
+        guard let activeChatIndex else { return }
+        update(&sessions[activeChatIndex])
         save()
     }
 
-    // MARK: - Chats
-
     func createNewChat() {
-
         if activeChat?.messages.isEmpty == true {
             return
         }
 
         let chat = ChatSession(title: Self.newChatTitle)
-
         sessions.insert(chat, at: 0)
-
         activeID = chat.id
-
         save()
     }
 
     func renameActiveChat(to title: String) {
-
         updateActiveChat {
             $0.title = Self.normalizedTitle(title)
         }
     }
 
     func rename(_ chat: ChatSession, to newTitle: String) {
-
-        guard
-            let index = sessions.firstIndex(
-                where: { $0.id == chat.id }
-            )
-        else { return }
+        guard let index = sessions.firstIndex(where: { $0.id == chat.id }) else {
+            return
+        }
 
         sessions[index].title = Self.normalizedTitle(newTitle)
-
         save()
     }
 
     func delete(_ chat: ChatSession) {
-
         sessions.removeAll { $0.id == chat.id }
 
         if sessions.isEmpty {
@@ -113,7 +97,6 @@ final class ChatStore: ObservableObject {
     }
 
     func deleteChats(at offsets: IndexSet) {
-
         sessions.remove(atOffsets: offsets)
 
         if sessions.isEmpty {
@@ -125,57 +108,57 @@ final class ChatStore: ObservableObject {
         save()
     }
 
-    func moveChats(
-        from source: IndexSet,
-        to destination: Int
-    ) {
-
-        sessions.move(
-            fromOffsets: source,
-            toOffset: destination
-        )
-
+    func moveChats(from source: IndexSet, to destination: Int) {
+        sessions.move(fromOffsets: source, toOffset: destination)
         save()
     }
 
-    // MARK: - Messages
-
     func update(messages: [ChatMessage]) {
-
         updateActiveChat {
-
             $0.messages = messages
         }
     }
 
-    // MARK: - Persistence
-
     private func save() {
-
-        guard
-            let data = try? JSONEncoder().encode(
-                sessions
+        do {
+            try persistence.save(
+                ChatArchive(sessions: sessions, activeID: activeID)
             )
-        else { return }
-
-        UserDefaults.standard.set(
-            data,
-            forKey: key
-        )
-
-        UserDefaults.standard.set(
-            activeID?.uuidString,
-            forKey: "\(key)_active"
-        )
+        } catch {
+            logger.error("Could not save chat history: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func load() {
+        do {
+            if let archive = try persistence.load() {
+                apply(archive)
+                return
+            }
 
+            try migrateLegacyArchiveIfAvailable()
+        } catch {
+            logger.error("Could not load chat history: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func apply(_ archive: ChatArchive) {
+        sessions = archive.sessions
+
+        if let activeID = archive.activeID,
+            sessions.contains(where: { $0.id == activeID })
+        {
+            self.activeID = activeID
+        } else {
+            activeID = sessions.first?.id
+        }
+    }
+
+    private func migrateLegacyArchiveIfAvailable() throws {
         guard
-            let data = UserDefaults.standard.data(
-                forKey: key
-            ),
-            let chats = try? JSONDecoder().decode(
+            let legacyDefaults,
+            let data = legacyDefaults.data(forKey: LegacyKey.sessions),
+            let legacySessions = try? JSONDecoder().decode(
                 [ChatSession].self,
                 from: data
             )
@@ -183,21 +166,19 @@ final class ChatStore: ObservableObject {
             return
         }
 
-        sessions = chats
+        let storedActiveID = legacyDefaults
+            .string(forKey: LegacyKey.activeID)
+            .flatMap(UUID.init(uuidString:))
 
-        if let id = UserDefaults.standard.string(
-            forKey: "\(key)_active"
-        ),
-            let uuid = UUID(uuidString: id),
-            sessions.contains(where: { $0.id == uuid })
-        {
+        let archive = ChatArchive(
+            sessions: legacySessions,
+            activeID: storedActiveID
+        )
+        try persistence.save(archive)
+        apply(archive)
 
-            activeID = uuid
-
-        } else {
-
-            activeID = sessions.first?.id
-        }
+        legacyDefaults.removeObject(forKey: LegacyKey.sessions)
+        legacyDefaults.removeObject(forKey: LegacyKey.activeID)
     }
 
     private func insertEmptyChat() {

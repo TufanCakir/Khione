@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "960E89F9-77D2-4D47-8AAC-A57B8104B142",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Khione.xcodeproj",
+        "identifier" : "2B1D05E6305C938200BA9D57",
+        "name" : "KhioneTests"
+      }
+    }
+  ],
+  "version" : 1
+}

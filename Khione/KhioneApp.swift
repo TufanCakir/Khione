@@ -14,6 +14,9 @@ struct KhioneApp: App {
 
     @AppStorage("hasSeenOnboarding")
     private var hasSeenOnboarding = false
+    @AppStorage("language")
+    private var language =
+        Locale.current.language.languageCode?.identifier ?? "en"
 
     init() {
         _themeManager = StateObject(wrappedValue: ThemeManager())
@@ -23,6 +26,7 @@ struct KhioneApp: App {
         WindowGroup {
             rootContent
                 .environmentObject(themeManager)
+                .environment(\.locale, Locale(identifier: language))
                 .preferredColorScheme(themeManager.colorScheme)
                 .tint(themeManager.accentColor)
         }

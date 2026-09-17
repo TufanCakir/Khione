@@ -1,0 +1,54 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Khione"
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription" : {
+      "comment" : "Privacy - Microphone Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Khione benötigt Zugriff auf das Mikrofon für Spracheingabe."
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "comment" : "Privacy - Photo Library Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Khione benötigt Zugriff auf Ihre Fotobibliothek, damit Sie Bilder im Chat teilen können."
+          }
+        }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription" : {
+      "comment" : "Privacy - Speech Recognition Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Khione wandelt Ihre Sprache lokal in Text um."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.3"
+}
