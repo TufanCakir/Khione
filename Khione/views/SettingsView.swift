@@ -213,10 +213,10 @@ extension SettingsView {
                         .foregroundStyle(themeManager.accentColor)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Plans & one-time purchase")
-                        Text("Unlock more features")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        Text("Khione Pro")
+                        Text("Choose the plan that fits your work")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }

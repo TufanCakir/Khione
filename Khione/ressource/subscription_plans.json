@@ -2,9 +2,9 @@
     "subscription_group_id": "group.khione.membership",
     "plans": [
         {
-            "id": "standard",
+            "id": "free",
             "kind": "free",
-            "product_id": null,
+            "product_ids": [],
             "title": {
                 "de": "Standard",
                 "en": "Standard"
@@ -47,16 +47,19 @@
             }
         },
         {
-            "id": "pro",
+            "id": "standard",
             "kind": "auto_renewable",
-            "product_id": "khione.pro.monthly",
+            "product_ids": [
+                "khione.standard.monthly",
+                "khione.standard.annual"
+            ],
             "title": {
-                "de": "Pro",
-                "en": "Pro"
+                "de": "Khione Pro Standard",
+                "en": "Khione Pro Standard"
             },
             "subtitle": {
-                "de": "Mehr Chat und Komfort",
-                "en": "More chat and comfort"
+                "de": "Für den produktiven Alltag",
+                "en": "For everyday productivity"
             },
             "badge": {
                 "de": "Beliebt",
@@ -86,20 +89,23 @@
             }
         },
         {
-            "id": "vision",
+            "id": "plus",
             "kind": "auto_renewable",
-            "product_id": "khione.vision.monthly",
+            "product_ids": [
+                "khione.plus.monthly",
+                "khione.plus.annual"
+            ],
             "title": {
-                "de": "Vision",
-                "en": "Vision"
+                "de": "Khione Pro Plus",
+                "en": "Khione Pro Plus"
             },
             "subtitle": {
-                "de": "Chat mit Bildern",
-                "en": "Chat with images"
+                "de": "Verstehen, schreiben und gestalten",
+                "en": "Understand, write, and create"
             },
             "badge": {
-                "de": "Bilder",
-                "en": "Images"
+                "de": "Empfohlen",
+                "en": "Recommended"
             },
             "limits": {
                 "daily_chat_limit": 1000,
@@ -127,20 +133,23 @@
             }
         },
         {
-            "id": "infinity",
+            "id": "studio",
             "kind": "auto_renewable",
-            "product_id": "khione.infinity.monthly",
+            "product_ids": [
+                "khione.studio.monthly",
+                "khione.studio.annual"
+            ],
             "title": {
-                "de": "Infinity",
-                "en": "Infinity"
+                "de": "Khione Pro Studio",
+                "en": "Khione Pro Studio"
             },
             "subtitle": {
-                "de": "Für intensive Nutzung",
-                "en": "For heavy use"
+                "de": "Für anspruchsvolle Projekte",
+                "en": "For demanding projects"
             },
             "badge": {
-                "de": "Maximal",
-                "en": "Max"
+                "de": "Studio",
+                "en": "Studio"
             },
             "limits": {
                 "daily_chat_limit": null,
@@ -164,34 +173,6 @@
                     "Maximum context per conversation",
                     "Ideal for learning and coding",
                     "All current features"
-                ]
-            }
-        }
-    ],
-    "one_time_purchases": [
-        {
-            "id": "lifetime",
-            "kind": "non_consumable",
-            "product_id": "khione.lifetime",
-            "unlocks_plan_id": "infinity",
-            "title": {
-                "de": "Lifetime",
-                "en": "Lifetime"
-            },
-            "subtitle": {
-                "de": "Einmal kaufen, dauerhaft nutzen",
-                "en": "Pay once, use forever"
-            },
-            "features": {
-                "de": [
-                    "Schaltet Infinity dauerhaft frei",
-                    "Keine wiederkehrende Zahlung",
-                    "Einmaliger Kauf über den Store"
-                ],
-                "en": [
-                    "Unlocks Infinity permanently",
-                    "No recurring payment",
-                    "One-time store purchase"
                 ]
             }
         }

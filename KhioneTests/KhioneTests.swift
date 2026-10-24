@@ -1,9 +1,92 @@
+//
+//  KhioneTests.swift
+//  Khione
+//
+//  Created by Tufan Cakir on 18.12.25.
+//
+
 import Foundation
 import Testing
+
 @testable import Khione
 
+struct SubscriptionCatalogTests {
+    private let catalog = Bundle.main.loadSubscriptionCatalog()
+
+    @Test func `No entitlement resolves to the free plan`() {
+        #expect(catalog.planID(for: []) == "free")
+    }
+
+    @Test func `A verified product resolves to its plan`() {
+        #expect(catalog.planID(for: ["khione.plus.monthly"]) == "plus")
+    }
+
+    @Test func `An annual product resolves to the same plan`() {
+        #expect(catalog.planID(for: ["khione.plus.annual"]) == "plus")
+    }
+
+    @Test func `Highest entitled plan wins`() {
+        let productIDs: Set<String> = [
+            "khione.standard.monthly",
+            "khione.studio.monthly",
+        ]
+
+        #expect(catalog.planID(for: productIDs) == "studio")
+    }
+}
+
+struct DocumentReviewTests {
+    @Test @MainActor
+    func `Review export contains findings and source`() {
+        let report = DocumentReviewReport(
+            id: UUID(),
+            generatedAt: Date(timeIntervalSince1970: 1_000),
+            summary: "A concise summary.",
+            findings: [
+                DocumentReviewFinding(
+                    id: UUID(),
+                    severity: .warning,
+                    title: "Notice period",
+                    explanation: "The deadline deserves attention.",
+                    sourceLabel: "Contract.pdf, page 2",
+                    evidence: "Three months before renewal"
+                )
+            ]
+        )
+
+        let export = report.markdown(fileName: "Contract.pdf")
+
+        #expect(export.contains("A concise summary."))
+        #expect(export.contains("Notice period"))
+        #expect(export.contains("Contract.pdf, page 2"))
+    }
+
+    @Test @MainActor
+    func `Older document archives decode without a review`() throws {
+        let json = """
+            {
+              "id": "00000000-0000-0000-0000-000000000001",
+              "fileName": "Legacy.txt",
+              "storedFileName": "legacy.txt",
+              "contentTypeIdentifier": "public.plain-text",
+              "importedAt": 0,
+              "extractedSources": [],
+              "insights": []
+            }
+            """
+
+        let document = try JSONDecoder().decode(
+            ProjectDocument.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(document.review == nil)
+    }
+}
+
 struct ChatPersistenceTests {
-    @Test func `Archive survives a file round trip`() throws {
+    @Test @MainActor
+    func `Archive survives a file round trip`() throws {
         let fixture = try Fixture()
         defer { fixture.remove() }
 

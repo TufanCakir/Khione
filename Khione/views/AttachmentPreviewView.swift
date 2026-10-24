@@ -22,6 +22,15 @@ struct AttachmentPreviewView: View {
                     .frame(width: 64, height: 64)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
+                VStack(alignment: .leading, spacing: 3) {
+                    Label("Ready to analyze", systemImage: "viewfinder")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Images and document text are processed privately.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
                 Button {
                     self.image = nil
                 } label: {

@@ -1,3 +1,10 @@
+//
+//  ChatStore.swift
+//  Khione
+//
+//  Created by Tufan Cakir on 18.12.25.
+//
+
 internal import Combine
 import Foundation
 import OSLog
@@ -76,7 +83,8 @@ final class ChatStore: ObservableObject {
     }
 
     func rename(_ chat: ChatSession, to newTitle: String) {
-        guard let index = sessions.firstIndex(where: { $0.id == chat.id }) else {
+        guard let index = sessions.firstIndex(where: { $0.id == chat.id })
+        else {
             return
         }
 
@@ -125,7 +133,9 @@ final class ChatStore: ObservableObject {
                 ChatArchive(sessions: sessions, activeID: activeID)
             )
         } catch {
-            logger.error("Could not save chat history: \(error.localizedDescription, privacy: .public)")
+            logger.error(
+                "Could not save chat history: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
@@ -138,7 +148,9 @@ final class ChatStore: ObservableObject {
 
             try migrateLegacyArchiveIfAvailable()
         } catch {
-            logger.error("Could not load chat history: \(error.localizedDescription, privacy: .public)")
+            logger.error(
+                "Could not load chat history: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
@@ -166,7 +178,8 @@ final class ChatStore: ObservableObject {
             return
         }
 
-        let storedActiveID = legacyDefaults
+        let storedActiveID =
+            legacyDefaults
             .string(forKey: LegacyKey.activeID)
             .flatMap(UUID.init(uuidString:))
 

@@ -95,9 +95,9 @@ struct ChatInputBarView: View {
                     ? selectedReplyStyle?.icon ?? "wand.and.stars"
                     : "wand.and.stars"
             )
-                .font(.system(size: 17, weight: .semibold))
-                .frame(width: 38, height: 38)
-                .contentShape(Circle())
+            .font(.system(size: 17, weight: .semibold))
+            .frame(width: 38, height: 38)
+            .contentShape(Circle())
         }
         .accessibilityLabel(accessibility.replyStyleLabel)
         .accessibilityHint(accessibility.replyStyleHint)

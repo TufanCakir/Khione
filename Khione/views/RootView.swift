@@ -10,24 +10,19 @@ import SwiftUI
 struct RootView: View {
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(SubscriptionManager.self) private var subscriptionManager
 
     @StateObject private var chatStore = ChatStore()
+    @State private var documentProjectStore = DocumentProjectStore()
 
     @State private var selectedTab = 0
     @State private var pendingSharedPrompt: String?
-    @AppStorage(DefaultsKey.activeSubscriptionPlanID)
-    private var activeSubscriptionPlanID = "standard"
     @AppStorage("language")
     private var language =
         Locale.current.language.languageCode?.identifier ?? "en"
 
-    private let subscriptionCatalog = Bundle.main.loadSubscriptionCatalog()
-
     private var canUseHistory: Bool {
-        subscriptionCatalog
-            .plan(id: activeSubscriptionPlanID)
-            .limits
-            .historyMessages > 0
+        subscriptionManager.activePlan.limits.historyMessages > 0
     }
 
     var body: some View {
@@ -44,6 +39,19 @@ struct RootView: View {
                 )
             }
             .tag(0)
+
+            ProjectsView(
+                store: documentProjectStore,
+                onAskProject: { prompt in
+                    chatStore.createNewChat()
+                    pendingSharedPrompt = prompt
+                    selectedTab = 0
+                }
+            )
+            .tabItem {
+                Label("Projects", systemImage: "folder.fill")
+            }
+            .tag(4)
 
             if canUseHistory {
                 Sidebar(
@@ -81,7 +89,7 @@ struct RootView: View {
                 consumePendingSharedContent()
             }
         }
-        .onChange(of: activeSubscriptionPlanID) { _, _ in
+        .onChange(of: subscriptionManager.activePlanID) { _, _ in
             if !canUseHistory && selectedTab == 1 {
                 selectedTab = 0
             }

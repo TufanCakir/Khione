@@ -1,3 +1,10 @@
+//
+//  ChatPersistence.swift
+//  Khione
+//
+//  Created by Tufan Cakir on 18.12.25.
+//
+
 import Foundation
 
 struct ChatArchive: Codable, Equatable {
@@ -60,7 +67,8 @@ struct FileChatPersistence: ChatPersisting {
             ).first
             ?? FileManager.default.temporaryDirectory
 
-        return baseURL
+        return
+            baseURL
             .appendingPathComponent("Khione", isDirectory: true)
             .appendingPathComponent("chat-history.json", isDirectory: false)
     }

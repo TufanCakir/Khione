@@ -11,6 +11,7 @@ import SwiftUI
 struct KhioneApp: App {
 
     @StateObject private var themeManager: ThemeManager
+    @State private var subscriptionManager = SubscriptionManager()
 
     @AppStorage("hasSeenOnboarding")
     private var hasSeenOnboarding = false
@@ -26,9 +27,13 @@ struct KhioneApp: App {
         WindowGroup {
             rootContent
                 .environmentObject(themeManager)
+                .environment(subscriptionManager)
                 .environment(\.locale, Locale(identifier: language))
                 .preferredColorScheme(themeManager.colorScheme)
                 .tint(themeManager.accentColor)
+                .task {
+                    await subscriptionManager.monitorTransactions()
+                }
         }
     }
 

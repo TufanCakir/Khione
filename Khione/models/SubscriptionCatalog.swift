@@ -10,22 +10,26 @@ import Foundation
 struct SubscriptionCatalog: Decodable {
     let subscriptionGroupID: String
     let plans: [SubscriptionPlan]
-    let oneTimePurchases: [OneTimePurchase]
 
-    var paidProductIDs: [String] {
-        plans.compactMap(\.productID) + oneTimePurchases.map(\.productID)
+    var subscriptionProductIDs: [String] {
+        plans.flatMap(\.productIDs)
     }
 
     enum CodingKeys: String, CodingKey {
         case subscriptionGroupID = "subscription_group_id"
         case plans
-        case oneTimePurchases = "one_time_purchases"
     }
 
     func plan(id: String?) -> SubscriptionPlan {
         plans.first { $0.id == id }
-            ?? plans.first { $0.id == "standard" }
-            ?? .fallbackStandard
+            ?? plans.first { $0.id == "free" }
+            ?? .fallbackFree
+    }
+
+    func planID(for entitledProductIDs: Set<String>) -> String {
+        plans.reversed().first { plan in
+            !entitledProductIDs.isDisjoint(with: plan.productIDs)
+        }?.id ?? "free"
     }
 
     static func activePlan(
@@ -45,7 +49,7 @@ enum DefaultsKey {
 struct SubscriptionPlan: Identifiable, Decodable {
     let id: String
     let kind: SubscriptionProductKind
-    let productID: String?
+    let productIDs: [String]
     let title: LocalizedPlanText
     let subtitle: LocalizedPlanText
     let badge: LocalizedPlanText?
@@ -55,7 +59,7 @@ struct SubscriptionPlan: Identifiable, Decodable {
     enum CodingKeys: String, CodingKey {
         case id
         case kind
-        case productID = "product_id"
+        case productIDs = "product_ids"
         case title
         case subtitle
         case badge
@@ -65,10 +69,10 @@ struct SubscriptionPlan: Identifiable, Decodable {
 }
 
 extension SubscriptionPlan {
-    static let fallbackStandard = SubscriptionPlan(
-        id: "standard",
+    static let fallbackFree = SubscriptionPlan(
+        id: "free",
         kind: .free,
-        productID: nil,
+        productIDs: [],
         title: LocalizedPlanText(de: "Standard", en: "Standard"),
         subtitle: LocalizedPlanText(de: "Kostenlos", en: "Free"),
         badge: nil,
@@ -84,30 +88,9 @@ extension SubscriptionPlan {
     )
 }
 
-struct OneTimePurchase: Identifiable, Decodable {
-    let id: String
-    let kind: SubscriptionProductKind
-    let productID: String
-    let unlocksPlanID: String
-    let title: LocalizedPlanText
-    let subtitle: LocalizedPlanText
-    let features: LocalizedPlanList
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case kind
-        case productID = "product_id"
-        case unlocksPlanID = "unlocks_plan_id"
-        case title
-        case subtitle
-        case features
-    }
-}
-
 enum SubscriptionProductKind: String, Decodable {
     case free
     case autoRenewable = "auto_renewable"
-    case nonConsumable = "non_consumable"
 }
 
 struct SubscriptionLimits: Decodable {
@@ -149,8 +132,7 @@ struct LocalizedPlanList: Decodable {
 extension SubscriptionCatalog {
     static let fallback = SubscriptionCatalog(
         subscriptionGroupID: "group.khione.membership",
-        plans: [],
-        oneTimePurchases: []
+        plans: []
     )
 }
 

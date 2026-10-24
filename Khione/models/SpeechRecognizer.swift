@@ -61,7 +61,8 @@ final class SpeechRecognizer: ObservableObject {
             return permissionGranted
         }
 
-        let speechAuthorization = await withCheckedContinuation { continuation in
+        let speechAuthorization = await withCheckedContinuation {
+            continuation in
             SFSpeechRecognizer.requestAuthorization {
                 continuation.resume(returning: $0)
             }

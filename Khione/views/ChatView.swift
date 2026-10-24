@@ -17,6 +17,7 @@ struct ChatView: View {
     @Binding private var pendingSharedPrompt: String?
 
     @EnvironmentObject private var themeManager: ThemeManager
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
@@ -100,8 +101,12 @@ struct ChatView: View {
             }
         }
         .onAppear {
+            viewModel.updateActivePlan(id: subscriptionManager.activePlanID)
             viewModel.configure(language: language, chatStore: chatStore)
             consumePendingSharedPrompt()
+        }
+        .onChange(of: subscriptionManager.activePlanID) { _, newPlanID in
+            viewModel.updateActivePlan(id: newPlanID)
         }
         .onChange(of: language) { _, newLanguage in
             viewModel.reloadLocalizations(language: newLanguage)

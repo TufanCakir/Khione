@@ -16,8 +16,10 @@ struct PreviewRoot<Content: View>: View {
 
     var body: some View {
         let theme = ThemeManager()
+        let subscriptions = SubscriptionManager()
 
         content
             .environmentObject(theme)
+            .environment(subscriptions)
     }
 }
