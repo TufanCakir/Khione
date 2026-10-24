@@ -33,6 +33,20 @@ struct SubscriptionCatalogTests {
 
         #expect(catalog.planID(for: productIDs) == "studio")
     }
+
+    @Test func `Project capabilities increase with paid plans`() {
+        let free = catalog.plan(id: "free").limits
+        let standard = catalog.plan(id: "standard").limits
+        let plus = catalog.plan(id: "plus").limits
+        let studio = catalog.plan(id: "studio").limits
+
+        #expect(!free.canUseProjects)
+        #expect(standard.canUseProjects)
+        #expect(!standard.canReviewDocuments)
+        #expect(plus.canReviewDocuments)
+        #expect(!plus.canCompareDocuments)
+        #expect(studio.canCompareDocuments)
+    }
 }
 
 struct DocumentReviewTests {

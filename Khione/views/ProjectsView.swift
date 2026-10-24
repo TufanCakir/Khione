@@ -10,7 +10,9 @@ import UniformTypeIdentifiers
 
 struct ProjectsView: View {
     let store: DocumentProjectStore
+    let access: SubscriptionLimits
     let onAskProject: (String) -> Void
+    let onUpgrade: () -> Void
 
     @State private var isCreatingProject = false
     @State private var projectName = ""
@@ -18,7 +20,9 @@ struct ProjectsView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if store.projects.isEmpty {
+                if !access.canUseProjects {
+                    ProjectsLockedState(onUpgrade: onUpgrade)
+                } else if store.projects.isEmpty {
                     ProjectsEmptyState(onCreate: { isCreatingProject = true })
                 } else {
                     ProjectsList(
@@ -28,6 +32,9 @@ struct ProjectsView: View {
                             ProjectDetailView(
                                 projectID: project.id,
                                 store: store,
+                                canReviewDocuments: access.canReviewDocuments,
+                                canCompareDocuments: access.canCompareDocuments,
+                                onUpgrade: onUpgrade,
                                 onAskProject: onAskProject
                             )
                         }
@@ -37,8 +44,10 @@ struct ProjectsView: View {
             .navigationTitle("Projects")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("New Project", systemImage: "plus") {
-                        isCreatingProject = true
+                    if access.canUseProjects {
+                        Button("New Project", systemImage: "plus") {
+                            isCreatingProject = true
+                        }
                     }
                 }
             }
@@ -65,6 +74,23 @@ struct ProjectsView: View {
             } message: {
                 Text(store.errorMessage ?? "")
             }
+        }
+    }
+}
+
+private struct ProjectsLockedState: View {
+    let onUpgrade: () -> Void
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("Projects require Khione Pro", systemImage: "lock.folder")
+        } description: {
+            Text(
+                "Create private workspaces, import documents, and ask questions with traceable sources with Khione Pro Standard or higher."
+            )
+        } actions: {
+            Button("View Plans", action: onUpgrade)
+                .buttonStyle(.borderedProminent)
         }
     }
 }
@@ -151,6 +177,9 @@ private struct ProjectRow: View {
 private struct ProjectDetailView: View {
     let projectID: UUID
     let store: DocumentProjectStore
+    let canReviewDocuments: Bool
+    let canCompareDocuments: Bool
+    let onUpgrade: () -> Void
     let onAskProject: (String) -> Void
 
     @State private var isImporting = false
@@ -181,8 +210,10 @@ private struct ProjectDetailView: View {
                     canCompare: project.documents.filter {
                         !$0.extractedSources.isEmpty
                     }.count >= 2,
+                    hasAccess: canCompareDocuments,
                     isComparing: store.comparingProjectIDs.contains(projectID),
-                    onCompare: compareDocuments
+                    onCompare: compareDocuments,
+                    onUpgrade: onUpgrade
                 )
 
                 Section("Sources") {
@@ -195,7 +226,9 @@ private struct ProjectDetailView: View {
                                 DocumentAnalysisView(
                                     projectID: projectID,
                                     documentID: document.id,
-                                    store: store
+                                    store: store,
+                                    canReviewDocuments: canReviewDocuments,
+                                    onUpgrade: onUpgrade
                                 )
                             } label: {
                                 ProjectDocumentRow(
@@ -285,16 +318,22 @@ private struct ProjectComparisonSection: View {
     let report: DocumentComparisonReport?
     let projectName: String
     let canCompare: Bool
+    let hasAccess: Bool
     let isComparing: Bool
     let onCompare: () -> Void
+    let onUpgrade: () -> Void
 
     var body: some View {
         Section {
-            Button(action: onCompare) {
+            Button(action: hasAccess ? onCompare : onUpgrade) {
                 HStack {
                     Label(
-                        report == nil ? "Compare Documents" : "Compare Again",
-                        systemImage: "rectangle.2.swap"
+                        hasAccess
+                            ? (report == nil
+                                ? "Compare Documents" : "Compare Again")
+                            : "Unlock Document Comparison",
+                        systemImage: hasAccess
+                            ? "rectangle.2.swap" : "lock.fill"
                     )
                     Spacer()
                     if isComparing {
@@ -302,7 +341,7 @@ private struct ProjectComparisonSection: View {
                     }
                 }
             }
-            .disabled(!canCompare || isComparing)
+            .disabled((hasAccess && !canCompare) || isComparing)
 
             if let report {
                 NavigationLink {
@@ -528,6 +567,8 @@ private struct DocumentAnalysisView: View {
     let projectID: UUID
     let documentID: UUID
     let store: DocumentProjectStore
+    let canReviewDocuments: Bool
+    let onUpgrade: () -> Void
 
     @AppStorage("language") private var language =
         Locale.current.language.languageCode?.identifier ?? "en"
@@ -554,7 +595,9 @@ private struct DocumentAnalysisView: View {
                     isReviewing: isReviewing,
                     hasReview: document.review != nil,
                     canReview: !document.extractedSources.isEmpty,
-                    onReview: reviewDocument
+                    hasAccess: canReviewDocuments,
+                    onReview: reviewDocument,
+                    onUpgrade: onUpgrade
                 )
                 if let report = document.review {
                     DocumentReviewSection(report: report)
@@ -601,15 +644,21 @@ private struct DocumentReviewActionSection: View {
     let isReviewing: Bool
     let hasReview: Bool
     let canReview: Bool
+    let hasAccess: Bool
     let onReview: () -> Void
+    let onUpgrade: () -> Void
 
     var body: some View {
         Section {
-            Button(action: onReview) {
+            Button(action: hasAccess ? onReview : onUpgrade) {
                 HStack {
                     Label(
-                        hasReview ? "Review Again" : "Review Document",
-                        systemImage: "doc.text.magnifyingglass"
+                        hasAccess
+                            ? (hasReview ? "Review Again" : "Review Document")
+                            : "Unlock Document Review",
+                        systemImage: hasAccess
+                            ? "doc.text.magnifyingglass"
+                            : "lock.fill"
                     )
                     Spacer()
                     if isReviewing {
@@ -617,7 +666,7 @@ private struct DocumentReviewActionSection: View {
                     }
                 }
             }
-            .disabled(!canReview || isReviewing)
+            .disabled((hasAccess && !canReview) || isReviewing)
         } footer: {
             Text(
                 "Khione reviews the recognized text locally and keeps every finding connected to its source."
@@ -808,5 +857,10 @@ private struct DocumentSourcesSection: View {
 }
 
 #Preview {
-    ProjectsView(store: DocumentProjectStore(), onAskProject: { _ in })
+    ProjectsView(
+        store: DocumentProjectStore(),
+        access: SubscriptionPlan.fallbackFree.limits,
+        onAskProject: { _ in },
+        onUpgrade: {}
+    )
 }

@@ -23,7 +23,10 @@
                 "can_send_images": false,
                 "can_use_image_mode": false,
                 "can_use_voice_input": false,
-                "can_use_reply_styles": false
+                "can_use_reply_styles": false,
+                "can_use_projects": false,
+                "can_review_documents": false,
+                "can_compare_documents": false
             },
             "features": {
                 "de": [
@@ -71,20 +74,25 @@
                 "can_send_images": false,
                 "can_use_image_mode": false,
                 "can_use_voice_input": true,
-                "can_use_reply_styles": true
+                "can_use_reply_styles": true,
+                "can_use_projects": true,
+                "can_review_documents": false,
+                "can_compare_documents": false
             },
             "features": {
                 "de": [
                     "Höheres tägliches Chatlimit",
                     "Mehr Kontext pro Unterhaltung",
                     "Spracheingabe",
-                    "Alle Antwortstile"
+                    "Alle Antwortstile",
+                    "Lokale Projekte und Dokumentimporte"
                 ],
                 "en": [
                     "Higher daily chat limit",
                     "More context per conversation",
                     "Voice input",
-                    "All reply styles"
+                    "All reply styles",
+                    "Local projects and document imports"
                 ]
             }
         },
@@ -113,7 +121,10 @@
                 "can_send_images": true,
                 "can_use_image_mode": true,
                 "can_use_voice_input": true,
-                "can_use_reply_styles": true
+                "can_use_reply_styles": true,
+                "can_use_projects": true,
+                "can_review_documents": true,
+                "can_compare_documents": false
             },
             "features": {
                 "de": [
@@ -121,6 +132,7 @@
                     "Bildanhänge und Bildmodus",
                     "Mehr Kontext pro Unterhaltung",
                     "Ideal für kreative Bild-Prompts",
+                    "KI-gestützte Dokumentprüfung mit Quellen",
                     "Alle Pro-Funktionen"
                 ],
                 "en": [
@@ -128,6 +140,7 @@
                     "Image attachments and image mode",
                     "More context per conversation",
                     "Ideal for creative image prompts",
+                    "AI-assisted document review with sources",
                     "All Pro features"
                 ]
             }
@@ -157,7 +170,10 @@
                 "can_send_images": true,
                 "can_use_image_mode": true,
                 "can_use_voice_input": true,
-                "can_use_reply_styles": true
+                "can_use_reply_styles": true,
+                "can_use_projects": true,
+                "can_review_documents": true,
+                "can_compare_documents": true
             },
             "features": {
                 "de": [
@@ -165,6 +181,7 @@
                     "Bildanhänge und Bildmodus",
                     "Maximaler Kontext pro Unterhaltung",
                     "Ideal für Lernen und Coding",
+                    "Dokumentprüfung und Quellenvergleich",
                     "Alle aktuellen Funktionen"
                 ],
                 "en": [
@@ -172,6 +189,7 @@
                     "Image attachments and image mode",
                     "Maximum context per conversation",
                     "Ideal for learning and coding",
+                    "Document review and source comparison",
                     "All current features"
                 ]
             }

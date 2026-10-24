@@ -42,10 +42,14 @@ struct RootView: View {
 
             ProjectsView(
                 store: documentProjectStore,
+                access: subscriptionManager.activePlan.limits,
                 onAskProject: { prompt in
                     chatStore.createNewChat()
                     pendingSharedPrompt = prompt
                     selectedTab = 0
+                },
+                onUpgrade: {
+                    selectedTab = 2
                 }
             )
             .tabItem {
@@ -87,6 +91,9 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 consumePendingSharedContent()
+                Task {
+                    await subscriptionManager.refreshEntitlements()
+                }
             }
         }
         .onChange(of: subscriptionManager.activePlanID) { _, _ in

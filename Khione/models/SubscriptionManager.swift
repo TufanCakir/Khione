@@ -63,6 +63,31 @@ final class SubscriptionManager {
             entitledProductIDs.insert(transaction.productID)
         }
 
+        // SubscriptionStoreView and Transaction.currentEntitlements can update at
+        // slightly different times after a purchase. Reading the subscription-group
+        // status as well makes the unlock deterministic, including during grace period.
+        let products =
+            (try? await Product.products(
+                for: catalog.subscriptionProductIDs
+            )) ?? []
+
+        for product in products {
+            guard let subscription = product.subscription,
+                let statuses = try? await subscription.status
+            else { continue }
+
+            for status in statuses
+            where status.state == .subscribed
+                || status.state == .inGracePeriod
+            {
+                guard case .verified(let transaction) = status.transaction
+                else {
+                    continue
+                }
+                entitledProductIDs.insert(transaction.productID)
+            }
+        }
+
         setActivePlanID(catalog.planID(for: entitledProductIDs))
     }
 

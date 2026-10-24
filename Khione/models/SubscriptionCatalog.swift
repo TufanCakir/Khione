@@ -82,7 +82,10 @@ extension SubscriptionPlan {
             canSendImages: false,
             canUseImageMode: false,
             canUseVoiceInput: false,
-            canUseReplyStyles: false
+            canUseReplyStyles: false,
+            canUseProjects: false,
+            canReviewDocuments: false,
+            canCompareDocuments: false
         ),
         features: LocalizedPlanList(de: [], en: [])
     )
@@ -100,6 +103,9 @@ struct SubscriptionLimits: Decodable {
     let canUseImageMode: Bool
     let canUseVoiceInput: Bool
     let canUseReplyStyles: Bool
+    let canUseProjects: Bool
+    let canReviewDocuments: Bool
+    let canCompareDocuments: Bool
 
     enum CodingKeys: String, CodingKey {
         case dailyChatLimit = "daily_chat_limit"
@@ -108,6 +114,9 @@ struct SubscriptionLimits: Decodable {
         case canUseImageMode = "can_use_image_mode"
         case canUseVoiceInput = "can_use_voice_input"
         case canUseReplyStyles = "can_use_reply_styles"
+        case canUseProjects = "can_use_projects"
+        case canReviewDocuments = "can_review_documents"
+        case canCompareDocuments = "can_compare_documents"
     }
 }
 

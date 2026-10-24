@@ -10,6 +10,7 @@ import SwiftUI
 
 struct SubscriptionView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SubscriptionManager.self) private var subscriptionManager
 
     private let catalog = Bundle.main.loadSubscriptionCatalog()
 
@@ -33,6 +34,14 @@ struct SubscriptionView: View {
                 Button("Done") {
                     dismiss()
                 }
+            }
+        }
+        .task {
+            await subscriptionManager.refreshEntitlements()
+        }
+        .onDisappear {
+            Task {
+                await subscriptionManager.refreshEntitlements()
             }
         }
     }
